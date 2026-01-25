@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Render Table from LocalStorage</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .null-value {
+      color: #999;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <table id="sensorDataTable">
+    <thead>
+      <tr>
+        <!-- 表头列名 -->
+        <th>采集时间</th>
+        <th>解调仪地址</th>
+        <th>解调仪类型</th>
+        <th>传感器ID</th>
+        <th>安装位置</th>
+        <th>通道号</th>
+        <th>传感器类型</th>
+        <th>温度(°C)</th>
+        <th>湿度(%)</th>
+        <th>频率(Hz)</th>
+        <th>应变值(με)</th>
+        <th>沉降值(mm)</th>
+        <th>X向倾角(°)</th>
+        <th>Y向倾角(°)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // 从 localStorage 读取数据
+    const storedData = localStorage.getItem('sensorData');
+    if (storedData) {
+      const data = JSON.parse(storedData);
+      const tbody = document.querySelector('#sensorDataTable tbody');
+
+      // 定义列顺序
+      const columns = [
+        '采集时间', '解调仪地址', '解调仪类型', '传感器ID', '安装位置', '通道号',
+        '传感器类型', '温度(°C)', '湿度(%)', '频率(Hz)', '应变值(με)',
+        '沉降值(mm)', 'X向倾角(°)', 'Y向倾角(°)'
+      ];
+
+      // 渲染表格
+      data.forEach(item => {
+        const row = document.createElement('tr');
+        columns.forEach(col => {
+          const cell = document.createElement('td');
+          const value = item[col];
+
+          if (value === null || value === undefined) {
+            cell.textContent = '-';
+            cell.className = 'null-value';
+          } else {
+            cell.textContent = value;
+          }
+
+          row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+      });
+
+      // 删除空白行
+      const rows = tbody.rows;
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const row = rows[i];
+        let allNull = true;
+        for (let j = 0; j < row.cells.length; j++) {
+          if (row.cells[j].textContent !== '-') {
+            allNull = false;
+            break;
+          }
+        }
+        if (allNull) {
+          tbody.removeChild(row);
+        }
+      }
+    } else {
+      alert('未找到数据！');
+    }
+  </script>
+</body>
+
+</html>
