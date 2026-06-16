@@ -2,11 +2,24 @@
   <div class="main">
     <big-control class="control" ></big-control>
     <drawerT :show="showDrawer"></drawerT>
+
+    <!-- ========== [加载动画] 开始 ========== -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring spinner-ring--reverse"></div>
+        <div class="spinner-dot"></div>
+      </div>
+      <p class="loading-text">模型加载中...</p>
+    </div>
+    <!-- ========== [加载动画] 结束 ========== -->
+
     <div id="screen" class="screen">
-      
       <monitorH></monitorH>
       <deviceControl></deviceControl>
       <healthyAssess></healthyAssess>
+      <saleAnalyse></saleAnalyse>
+      <flowMonitoring></flowMonitoring>
       <button class="fullscreen-btn" @click="toggleFullscreen" title="全屏">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 4H10V10H4V4Z" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -34,13 +47,17 @@ import monitorH from '@/components/monitorH.vue'
 import drawerT from '@/components/drawerT.vue';
 import healthyAssess from '@/components/healthyAssess.vue'
 import deviceControl from '@/components/deviceControl.vue'
+import saleAnalyse from '@/components/saleAnalyse.vue'
+import flowMonitoring from '@/components/flowMonitoring.vue'
 let app, camera, scene, renderer, controls, clock, reprocessing, materials={}
 export default {
   name: 'HomeView',
-  components: { bigControl,monitorH,drawerT,healthyAssess,deviceControl },
+  components: { bigControl,monitorH,drawerT,healthyAssess,deviceControl,saleAnalyse,flowMonitoring },
   data() {
     return {
-      showDrawer: true // 默认首页显示侧拉框
+      showDrawer: true, // 默认首页显示侧拉框
+      // [加载动画]
+      loading: false
     }
   },
   methods: {
@@ -80,7 +97,11 @@ export default {
       //开启辉光
       reprocessing = createReprocessing(app)
 
+      // [加载动画] 显示loading → 加载模型 → 隐藏loading
+      this.loading = true
+      await this.$nextTick()
       await loaderModel(app)
+      this.loading = false
       // console.log(app);
       app.render(() => {
         const delta = clock.getDelta()
@@ -152,6 +173,79 @@ export default {
 </script>
 
 <style lang="less">
+// ==================== [加载动画] 样式开始 ====================
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(0, 20, 40, 0.95) 0%, rgba(0, 0, 0, 1) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid transparent;
+  border-top-color: #00d4ff;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+
+  &--reverse {
+    width: 60px;
+    height: 60px;
+    top: 10px;
+    left: 10px;
+    border-top-color: #3e9ae0;
+    animation-direction: reverse;
+    animation-duration: 0.8s;
+  }
+}
+
+.spinner-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #00d4ff;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6), 0 0 24px rgba(0, 212, 255, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-text {
+  margin-top: 24px;
+  color: rgba(0, 212, 255, 0.8);
+  font-size: 14px;
+  letter-spacing: 4px;
+  animation: flicker 2s ease-in-out infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.5; }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+// ==================== [加载动画] 样式结束 ====================
+
 .main {
   width: 100%;
   height: 100%;

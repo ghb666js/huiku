@@ -382,52 +382,92 @@ export default {
     // margin: 20px;
 }
 
+// ==================== 参考drawerT风格 ====================
+@btn-bg: rgba(0, 30, 60, 0.6);
+@btn-bg-hover: rgba(0, 50, 100, 0.75);
+@btn-bg-active: linear-gradient(180deg, rgba(0, 40, 80, 0.95), rgba(0, 20, 40, 0.95));
+@btn-text: #c6d6ea;
+@btn-accent: #00d4ff;
+@btn-border: rgba(0, 140, 255, 0.3);
+@btn-border-active: rgba(0, 140, 255, 0.6);
+
 .container label {
-    display: flex;
-    cursor: pointer;
-    font-weight: 500;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 0.375em;
+  display: flex;
+  cursor: pointer;
+  font-weight: 500;
+  position: relative;
+  overflow: visible;
+  margin-bottom: 0.3em;
 }
 
 .container label input {
-    position: absolute;
-    left: -9999px;
+  position: absolute;
+  left: -9999px;
 }
 
-.container label input:checked+span {
-    background-color: #414181;
-    color: white;
-}
-
-.container label input:checked+span:before {
-    box-shadow: inset 0 0 0 0.4375em #00005c;
-}
-
+// ==================== 未选中 ====================
 .container label span {
-    display: flex;
-    align-items: center;
-    padding: 0.375em 0.75em 0.375em 0.375em;
-    border-radius: 99em;
-    transition: 0.25s ease;
-    color: #373785;
+  display: flex;
+  align-items: center;
+  padding: 0.45em 1em;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: @btn-text;
+  background: @btn-bg;
+  border: 1px solid @btn-border;
+  font-family: 'Arial', sans-serif;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 140, 255, 0.2);
+  position: relative;
+  box-shadow: inset 0 0 10px rgba(0, 140, 255, 0.06);
 }
 
 .container label span:hover {
-    background-color: #d6d6e5;
+  color: #ffffff;
+  background: @btn-bg-hover;
+  border-color: rgba(0, 140, 255, 0.5);
+  text-shadow: 0 0 6px rgba(0, 140, 255, 0.4);
 }
 
+// ==================== 左侧指示条（未选中） ====================
+.container label span:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+// ==================== 选中 ====================
+.container label input:checked + span {
+  background: @btn-bg-active;
+  border: 1px solid @btn-border-active;
+  color: @btn-accent;
+  font-weight: 600;
+  text-shadow:
+    0 0 8px rgba(0, 212, 255, 0.7),
+    0 0 16px rgba(0, 212, 255, 0.4);
+  box-shadow:
+    0 0 12px rgba(0, 140, 255, 0.25),
+    inset 0 0 15px rgba(0, 140, 255, 0.12);
+}
+
+// ==================== 左侧指示条（选中） ====================
+.container label input:checked + span:after {
+  background: @btn-accent;
+  box-shadow:
+    0 0 6px rgba(0, 212, 255, 0.8),
+    0 0 14px rgba(0, 212, 255, 0.4);
+  top: 18%;
+  bottom: 18%;
+}
+
+// 隐藏原始radio圆点
 .container label span:before {
-    display: flex;
-    flex-shrink: 0;
-    content: '';
-    background-color: #fff;
-    width: 1.5em;
-    height: 1.5em;
-    border-radius: 50%;
-    margin-right: 0.375em;
-    transition: 0.25s ease;
-    box-shadow: inset 0 0 0 0.125em #00005c;
+  display: none;
 }
 </style>

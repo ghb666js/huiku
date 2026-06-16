@@ -101,8 +101,10 @@ export function loaderModel(app) {
       },
     ];
 
-    app.iterateLoad(urls, null, () => {});
-    resolve();
+    // [加载动画] resolve移入onAllLoad回调，确保模型真正加载完成后才结束loading
+    app.iterateLoad(urls, null, () => {
+      resolve();
+    });
   });
 }
 // 删除标签
