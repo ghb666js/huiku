@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <drawerT></drawerT>
+    
     <showText></showText>
 
     <div class="main" ></div>
@@ -12,10 +12,10 @@
 
 <script>
 import showText from './components/showText.vue';
-import drawerT from './components/drawerT.vue';
+
 export default {
   name: 'App',
-  components: { showText,drawerT },
+  components: { showText },
   data() {
     return {
       

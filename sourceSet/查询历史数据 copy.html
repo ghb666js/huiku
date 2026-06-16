@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>传感器数据查询系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", "SimSun", sans-serif;
+      font-size: 12px;
+      background-color: #f0f0f0;
+      padding: 10px;
+    }
+
+    .container {
+      background-color: #f5f5f5;
+      border: 1px solid #d4d4d4;
+      padding: 10px;
+    }
+
+    /* 查询条件区域 */
+    .query-section {
+      background-color: #e8e8e8;
+      border: 1px solid #c0c0c0;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .query-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+
+    .query-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .query-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .query-label {
+      width: 70px;
+      text-align: right;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    .query-input {
+      flex: 1;
+      height: 22px;
+      border: 1px solid #a9a9a9;
+      padding: 2px 5px;
+      font-size: 12px;
+    }
+
+    .date-group {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 5px;
+    }
+
+    .date-input {
+      width: 140px;
+      height: 22px;
+      border: 1px solid #a9a9a9;
+      padding: 2px 5px;
+      font-size: 12px;
+    }
+
+    .date-separator {
+      color: #666;
+    }
+
+    /* 按钮区域 */
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #d0d0d0;
+    }
+
+    .btn {
+      height: 24px;
+      padding: 0 15px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #999;
+      background: linear-gradient(to bottom, #fff 0%, #e0e0e0 100%);
+    }
+
+    .btn:hover {
+      background: linear-gradient(to bottom, #f0f0f0 0%, #d0d0d0 100%);
+    }
+
+    .btn:active {
+      background: #d0d0d0;
+    }
+
+    /* 数据表格区域 */
+    .table-section {
+      background-color: #fff;
+      border: 1px solid #c0c0c0;
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .data-table th {
+      background: linear-gradient(to bottom, #f5f5f5 0%, #e0e0e0 100%);
+      border: 1px solid #c0c0c0;
+      padding: 6px 10px;
+      text-align: center;
+      font-weight: normal;
+      color: #333;
+    }
+
+    .data-table td {
+      border: 1px solid #d0d0d0;
+      padding: 5px 10px;
+      text-align: center;
+      color: #333;
+    }
+
+    .data-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .data-table tr:hover {
+      background-color: #e8f4ff;
+    }
+
+    /* 统计信息 */
+    .stats-info {
+      padding: 8px 10px;
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #c0c0c0;
+      font-size: 12px;
+      color: #666;
+    }
+
+    /* 列宽控制 */
+    .col-time {
+      min-width: 140px;
+    }
+
+    .col-addr {
+      min-width: 110px;
+    }
+
+    .col-type {
+      min-width: 100px;
+    }
+
+    .col-id {
+      min-width: 80px;
+    }
+
+    .col-pos {
+      min-width: 120px;
+    }
+
+    .col-channel {
+      min-width: 60px;
+    }
+
+    .col-sensor {
+      min-width: 90px;
+    }
+
+    .col-temp {
+      min-width: 70px;
+    }
+
+    .col-humidity {
+      min-width: 60px;
+    }
+
+    .col-freq {
+      min-width: 80px;
+    }
+
+    .col-strain {
+      min-width: 90px;
+    }
+
+    .col-settle {
+      min-width: 90px;
+    }
+
+    .col-tiltx {
+      min-width: 90px;
+    }
+
+    .col-tilty {
+      min-width: 90px;
+    }
+
+    /* 日期选择器样式 */
+    input[type="date"] {
+      font-family: "Microsoft YaHei", sans-serif;
+      padding: 2px 5px;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- 查询条件 -->
+    <div class="query-section">
+      <div class="query-title">查询条件</div>
+
+      <div class="query-row">
+        <span class="query-label">开始日期：</span>
+        <div class="date-group">
+          <input type="date" class="date-input" id="startDate" style="width: 150px;">
+          <span class="date-separator">结束日期：</span>
+          <input type="date" class="date-input" id="endDate" style="width: 150px;">
+          <span class="query-label">传感器ID：</span>
+          <input type="text" class="query-input" id="sensorId" placeholder="请输入传感器ID">
+          <span class="query-label">安装位置：</span>
+          <input type="text" class="query-input" id="installPosition" placeholder="请输入安装位置">
+        </div>
+      </div>
+      <!-- 
+    <div class="query-row">
+      <span class="query-label">传感器ID：</span>
+      <input type="text" class="query-input" id="sensorId" placeholder="">
+      <span class="query-label" style="width: 80px;">解调仪编号：</span>
+      <input type="text" class="query-input" id="deviceCode" placeholder="">
+    </div>
+
+    <div class="query-row">
+      <span class="query-label">数据条数：</span>
+      <input type="text" class="query-input" id="dataCount" placeholder="">
+    </div> -->
+
+      <div class="button-row">
+        <button class="btn" id="queryButton">查询</button>
+        <!-- <button class=" btn" onclick="exportCsv()">导出csv</button> -->
+        <button class="btn" id="clearButton">清空</button>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-section">
+      <div class="stats-info" id="statsInfo">请输入查询条件并点击查询按钮</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-time">采集时间</th>
+            <th class="col-addr">解调器地址</th>
+            <th class="col-type">解调器类型</th>
+            <th class="col-id">传感器ID</th>
+            <th class="col-pos">安装位置</th>
+            <th class="col-channel">通道号</th>
+            <th class="col-sensor">传感器类型</th>
+            <th class="col-temp">温度(℃)</th>
+            <th class="col-humidity">湿度(%)</th>
+            <th class="col-freq">频率(Hz)</th>
+            <th class="col-strain">应变值(με)</th>
+            <th class="col-settle">沉降值(mm)</th>
+            <th class="col-tiltx">X向倾角(°)</th>
+            <th class="col-tilty">Y向倾角(°)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- 数据行将通过JavaScript动态插入 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const queryButton = document.getElementById('queryButton')
+    const clearButton = document.getElementById('clearButton')
+
+    // 显示数据到表格
+    function displayData(filteredData) {
+      const tbody = document.getElementById('tableBody');
+      const statsInfo = document.getElementById('statsInfo');
+
+      tbody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+        statsInfo.textContent = '未找到符合条件的数据';
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="14" style="text-align: center; color: #999; padding: 20px;">暂无数据</td>';
+        tbody.appendChild(tr);
+        return;
+      }
+
+      statsInfo.textContent = `共查询到 ${filteredData.length} 条数据`;
+
+      filteredData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+                    <td>${row["采集时间"]}</td>
+                    <td>${row["解调仪地址"]}</td>
+                    <td>${row["解调仪类型"]}</td>
+                    <td>${row["传感器ID"]}</td>
+                    <td>${row["安装位置"]}</td>
+                    <td>${row["通道号"]}</td>
+                    <td>${row["传感器类型"]}</td>
+                    <td>${row["温度(°C)"]}</td>
+                    <td>${row["湿度(%)"]}</td>
+                    <td>${row["频率(Hz)"]}</td>
+                    <td>${row["应变值(με)"]}</td>
+                    <td>${row["沉降值(mm)"]}</td>
+                    <td>${row["X向倾角(°)"]}</td>
+                    <td>${row["Y向倾角(°)"]}</td>
+                `;
+        tbody.appendChild(tr);
+      });
+    }
+    /*----------------------------------------------------------------------*/
+    // 获取所需要的历史数据
+    async function getHistoryData(tableName, limit) {
+      try {
+        // 参数校验
+        if (!tableName || typeof tableName !== 'string') {
+          throw new Error('表名必须是有效的字符串');
+        }
+
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100000) {
+          throw new Error('limit 必须是 1-10000 之间的整数');
+        }
+
+        const res = await fetch(`http://localhost:3000/api/query/${tableName}?limit=${limit}`);
+
+        if (!res.ok) {
+          throw new Error(`HTTP 错误: ${res.status}`);
+        }
+
+        const result = await res.json();
+        const data = result.data || [];
+
+        return data;
+
+      } catch (err) {
+        console.error('获取历史数据错误:', err);
+        throw err; // 抛出错误让调用方处理
+      }
+    }
+
+    /*----------------------------------------------------------------------*/
+    // 查询历史数据
+    queryButton.addEventListener('click', async function () {
+      console.log(1)
+      const startDate = document.getElementById('startDate').value.trim();
+      const endDate = document.getElementById('endDate').value.trim();
+      const sensorId = document.getElementById('sensorId').value.trim();
+      // const deviceCode = document.getElementById('deviceCode').value.trim();
+      const installPosition = document.getElementById('installPosition').value.trim();
+      // 验证输入
+      if (!startDate || !endDate) {
+        alert('请输入开始日期和结束日期');
+        return;
+      }
+
+      // 解析 '2025-11-15' 格式
+      const parseDate = (dateStr) => {
+        const parts = dateStr.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      };
+      const start = parseDate(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = parseDate(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      if (start > end) {
+        alert('开始日期不能大于结束日期');
+        return;
+      }
+
+      // 获取数据
+      const historyData = await getHistoryData('data', 12840)
+      // 筛选数据
+      let filteredData = historyData.filter(item => {
+        // 原代码：const itemDate = new Date(item["采集时间"]);
+        // 修改为：解析 '2025-11-15-08:07' 格式
+        const parseCustomDate = (dateStr) => {
+          const parts = dateStr.split('-');
+          return new Date(parts[0], parts[1] - 1, parts[2], parts[3].split(':')[0], parts[3].split(':')[1]);
+        };
+        const itemDate = parseCustomDate(item["采集时间"]);
+        const dateMatch = itemDate >= start && itemDate <= end;
+
+        let sensorMatch = true;
+        if (sensorId) {
+          // 传感器ID是数字，转为字符串比较
+          sensorMatch = String(item["传感器ID"]).includes(sensorId);
+        }
+
+
+        let positionMatch = true;
+        if (installPosition) {
+          positionMatch = item["安装位置"].includes(installPosition);
+        }
+
+        return dateMatch && sensorMatch && positionMatch;
+      });
+
+      // 显示结果
+      displayData(filteredData);;
+    })
+
+    /*----------------------------------------------------------------------*/
+    // 清除历史数据
+    clearButton.addEventListener('click', function () {
+      console.log(2)
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      document.getElementById('sensorId').value = '';
+      // document.getElementById('deviceCode').value = '';
+      document.getElementById('dataCount').value = '';
+      document.getElementById('tableBody').innerHTML = '';
+      document.getElementById('statsInfo').textContent = '请输入查询条件并点击查询按钮';
+    })
+  </script>
+</body>
+
+</html>

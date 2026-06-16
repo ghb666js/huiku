@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>景德镇电厂大型粉料库 - 电源控制系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "SimSun", "宋体", "Microsoft YaHei", serif;
+      background-color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .main-window {
+      background-color: #f5f5f5;
+      border: 2px solid #c0c0c0;
+      border-radius: 6px;
+      padding: 25px 35px;
+      width: 700px;
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .main-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 20px;
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    .system-status {
+      text-align: center;
+      margin-bottom: 15px;
+      padding: 12px;
+      background-color: #e7f3ff;
+      border: 1px solid #b8daff;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #004085;
+    }
+
+    .system-status.connected {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+
+    .system-status.error {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+
+    .system-status.processing {
+      background-color: #fff3cd;
+      border-color: #ffeaa7;
+      color: #856404;
+    }
+
+    .auth-section {
+      text-align: center;
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: #e8f4f8;
+      border: 1px solid #b0d4e3;
+      border-radius: 4px;
+    }
+
+    .auth-btn {
+      padding: 10px 24px;
+      font-size: 14px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: "SimSun", "宋体", "Microsoft YaHei", serif;
+      margin: 0 5px;
+    }
+
+    .auth-btn:hover {
+      background-color: #357abd;
+    }
+
+    .auth-btn.warning {
+      background-color: #f0ad4e;
+    }
+
+    .auth-btn:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .auth-status {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .detect-result {
+      background-color: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .detect-result.show {
+      display: block;
+    }
+
+    .detect-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #155724;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .port-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: "Consolas", "Courier New", monospace;
+    }
+
+    .port-table th,
+    .port-table td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #c3e6cb;
+    }
+
+    .port-table th {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .port-table .com-cell {
+      font-weight: bold;
+      color: #155724;
+      font-size: 14px;
+    }
+
+    .port-table .device-type {
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .device-type.radar {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #28a745;
+    }
+
+    .device-type.sensor {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #17a2b8;
+    }
+
+    .device-type.unknown {
+      color: #999;
+      font-style: italic;
+    }
+
+    .control-panel {
+      background-color: #ffffff;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      padding: 20px;
+    }
+
+    .control-block {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .control-block.active-device {
+      border-color: #5cb85c;
+      background-color: #f0f9f0;
+    }
+
+    .block-title1 {
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .port-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+
+    .port-label {
+      font-weight: bold;
+      color: #000;
+      white-space: nowrap;
+    }
+
+    .port-select {
+      width: 340px;
+      height: 28px;
+      font-size: 13px;
+      border: 1px solid #a0a0a0;
+      background-color: #fff;
+      margin-left: 5px;
+      text-align: center;
+      text-align-last: center;
+      font-family: "Consolas", "Courier New", monospace;
+    }
+
+    .port-select:disabled {
+      background-color: #f0f0f0;
+      color: #999;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .control-btn {
+      width: 100px;
+      height: 32px;
+      font-size: 16px;
+      border: 1px solid #a0a0a0;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: "SimSun", "宋体", "Microsoft YaHei", serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-on {
+      background-color: #ffffff;
+      color: #000;
+    }
+
+    .btn-on:disabled {
+      background-color: #d0d0d0;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .btn-off {
+      background-color: #a0a0a0;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .btn-off.active {
+      background-color: #ffffff;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .footer {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 13px;
+      color: #000;
+      line-height: 1.6;
+    }
+
+    .status-tip {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      margin-top: 5px;
+      height: 16px;
+    }
+
+    .status-tip.connected {
+      color: #5cb85c;
+      font-weight: bold;
+    }
+
+    .status-tip.error {
+      color: #d9534f;
+    }
+
+    .status-tip.warning {
+      color: #f0ad4e;
+    }
+
+    .status-tip.info {
+      color: #17a2b8;
+    }
+
+    .error-detail {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: #721c24;
+      font-family: "Consolas", monospace;
+      display: none;
+    }
+
+    .error-detail.show {
+      display: block;
+    }
+
+    .query-log {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 11px;
+      font-family: "Consolas", monospace;
+      max-height: 250px;
+      overflow-y: auto;
+      text-align: left;
+      display: none;
+    }
+
+    .query-log.show {
+      display: block;
+    }
+
+    .query-log .log-entry {
+      margin: 2px 0;
+      padding: 2px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+
+    .query-log .log-success {
+      color: #28a745;
+    }
+
+    .query-log .log-error {
+      color: #dc3545;
+    }
+
+    .query-log .log-info {
+      color: #17a2b8;
+    }
+
+    .query-log .log-warning {
+      color: #f0ad4e;
+    }
+
+    .refresh-shutdown-log {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: #856404;
+      font-family: "Consolas", monospace;
+      max-height: 100px;
+      overflow-y: auto;
+      text-align: left;
+      display: none;
+    }
+
+    .refresh-shutdown-log.show {
+      display: block;
+    }
+
+    .refresh-shutdown-log .log-entry {
+      margin: 2px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main-window">
+    <h1 class="main-title">景德镇电厂大型粉料库</h1>
+
+    <div class="system-status" id="system-status">
+      正在初始化...
+    </div>
+
+    <div class="auth-section">
+      <button class="auth-btn" id="btn-auto-detect" onclick="authorizeAndAutoDetect()">
+        一键授权并自动识别
+      </button>
+      <button class="auth-btn warning" id="btn-query-devices" onclick="queryDevices()" disabled>
+        智能查询设备类型
+      </button>
+      <div class="auth-status" id="auth-status">
+        等待操作...
+      </div>
+      <div class="error-detail" id="error-detail"></div>
+      <div class="query-log" id="query-log"></div>
+      <div class="refresh-shutdown-log" id="refresh-shutdown-log"></div>
+    </div>
+
+    <div class="detect-result" id="detect-result">
+      <div class="detect-title">✓ 系统COM端口映射</div>
+      <table class="port-table">
+        <thead>
+          <tr>
+            <th>系统COM号</th>
+            <th>VID</th>
+            <th>PID</th>
+            <th>制造商</th>
+            <th>设备类型</th>
+          </tr>
+        </thead>
+        <tbody id="port-table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="control-panel">
+      <div class="control-block" id="block-radar">
+        <div class="block-title1">智能3D雷达机器人电源控制系统</div>
+        <div class="port-row">
+          <span class="port-label">通讯端口：</span>
+          <select class="port-select" id="port-radar" disabled onchange="onPortChange('radar')">
+            <option>请先授权并识别端口...</option>
+          </select>
+        </div>
+        <div class="button-row">
+          <button class="control-btn btn-on" id="btn-radar-on" onclick="togglePower('radar', true)" disabled>供电</button>
+          <button class="control-btn btn-off" id="btn-radar-off" disabled>断电</button>
+        </div>
+        <div class="status-tip" id="status-radar"></div>
+      </div>
+
+      <div class="control-block" id="block-sensor">
+        <div class="block-title1">传感器解调仪电源控制系统</div>
+        <div class="port-row">
+          <span class="port-label">通讯端口：</span>
+          <select class="port-select" id="port-sensor" disabled onchange="onPortChange('sensor')">
+            <option>请先授权并识别端口...</option>
+          </select>
+        </div>
+        <div class="button-row">
+          <button class="control-btn btn-on" id="btn-sensor-on" onclick="togglePower('sensor', true)"
+            disabled>供电</button>
+          <button class="control-btn btn-off" id="btn-sensor-off" disabled>断电</button>
+        </div>
+        <div class="status-tip" id="status-sensor"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>信息工程学院</p>
+      <p>江西水利电力大学</p>
+    </div>
+  </div>
+
+  <script>
+    // 控制指令
+    const openCommand = new Uint8Array([0xa0, 0x01, 0x03, 0xa4]);
+    const closeCommand = new Uint8Array([0xa0, 0x01, 0x02, 0xa3]);
+    const openResponse = [0xA0, 0x01, 0x01, 0xA2];
+    const closeResponse = [0xA0, 0x01, 0x00, 0xA1];
+
+    // 查询指令
+    const queryCommand = new Uint8Array([0xa0, 0x01, 0x05, 0xa6]);
+    const queryResponse = [0xA0, 0x01, 0x00, 0xA1];
+    const sensorQueryCommand = new Uint8Array([0x02, 0x06, 0x00, 0x00, 0x00, 0x31, 0x48, 0x2D]);
+    const sensorQueryResponse = [0x02, 0x06, 0x00, 0x00, 0x00, 0x31, 0x48, 0x2D];
+
+    const powerState = { radar: false, sensor: false };
+    const selectedPorts = { radar: null, sensor: null };
+    const portHandles = { radar: { port: null }, sensor: { port: null } };
+    const deviceConfig = {
+      radar: { name: '智能3D雷达机器人' },
+      sensor: { name: '传感器解调仪' }
+    };
+
+    // 运行时设备类型标记（仅当前会话有效，刷新后清空）
+    const runtimeDeviceTypes = {};
+
+    let authorizedPorts = [];  // 浏览器授权的端口对象数组
+    let systemComPorts = [];   // Node.js返回的系统COM端口信息
+    let portMapping = {};      // 浏览器索引 -> 系统COM信息映射
+    const NODE_SERVER = 'http://localhost:3000';
+
+    // 检测是否为页面刷新（使用sessionStorage）
+    function isPageRefresh() {
+      const hasSession = sessionStorage.getItem('page_session_active');
+
+      if (hasSession) {
+        // sessionStorage存在，说明是刷新页面
+        return true;
+      } else {
+        // sessionStorage不存在，说明是新打开页面或重新运行
+        sessionStorage.setItem('page_session_active', 'true');
+        return false;
+      }
+    }
+
+    // 页面加载时初始化
+    window.onload = async function () {
+      // 检测是否为刷新页面，如果是则执行断电
+      if (isPageRefresh()) {
+        console.log('检测到页面刷新，准备执行断电操作...');
+        await executeRefreshShutdown();
+      } else {
+        console.log('新页面会话，跳过断电操作');
+      }
+
+      await checkNodeService();
+
+      // 清空运行时设备类型（确保刷新后重新查询）
+      Object.keys(runtimeDeviceTypes).forEach(key => delete runtimeDeviceTypes[key]);
+
+      // 尝试从浏览器获取已授权的端口（不需要重新授权）
+      try {
+        authorizedPorts = await navigator.serial.getPorts();
+        console.log('页面加载时获取的授权端口:', authorizedPorts.length, '个');
+      } catch (e) {
+        console.log('获取授权端口失败:', e);
+      }
+
+      // 尝试恢复端口映射（但不恢复设备类型）
+      const saved = localStorage.getItem('port_mapping_v2');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          systemComPorts = data.systemComPorts || [];
+          portMapping = data.portMapping || {};
+
+          // 只有在获取到授权端口后才尝试匹配
+          if (authorizedPorts.length > 0 && validateConfiguration()) {
+            displayDetectResult();
+            updateMainPortLists();
+            document.getElementById('system-status').className = 'system-status connected';
+            document.getElementById('system-status').textContent =
+              `已恢复端口配置：${Object.keys(portMapping).length} 个端口可用，等待设备类型查询`;
+
+            // 有端口映射就启用查询按钮，但设备类型为空
+            if (Object.keys(portMapping).length >= 1) {
+              document.getElementById('btn-query-devices').disabled = false;
+            }
+          } else {
+            document.getElementById('system-status').className = 'system-status warning';
+            document.getElementById('system-status').textContent =
+              '配置需要更新，请重新点击"一键授权并自动识别"';
+          }
+        } catch (e) {
+          console.error('加载配置失败:', e);
+          document.getElementById('system-status').textContent =
+            '首次使用，请点击"一键授权并自动识别"';
+        }
+      } else {
+        document.getElementById('system-status').textContent =
+          '首次使用，请点击"一键授权并自动识别"';
+      }
+    };
+
+    // 页面刷新时执行断电操作
+    async function executeRefreshShutdown() {
+      const logDiv = document.getElementById('refresh-shutdown-log');
+      logDiv.innerHTML = '<div class="log-entry">检测到页面刷新，正在关闭电源端口...</div>';
+      logDiv.classList.add('show');
+
+      try {
+        // 获取已授权的端口
+        const ports = await navigator.serial.getPorts();
+        if (ports.length === 0) {
+          logDiv.innerHTML += '<div class="log-entry">无已授权端口，跳过断电操作</div>';
+          setTimeout(() => logDiv.classList.remove('show'), 2000);
+          return;
+        }
+
+        logDiv.innerHTML += `<div class="log-entry">发现 ${ports.length} 个已授权端口，准备发送断电指令</div>`;
+
+        // 向所有已授权端口发送断电指令
+        let successCount = 0;
+        for (let i = 0; i < ports.length; i++) {
+          const port = ports[i];
+          try {
+            // 尝试打开端口（如果未打开）
+            if (!port.writable || !port.readable) {
+              await port.open({ baudRate: 9600 });
+            }
+
+            // 发送断电指令
+            const writer = port.writable.getWriter();
+            await writer.write(closeCommand);
+            writer.releaseLock();
+
+            // 等待短暂时间确保指令发送
+            await new Promise(r => setTimeout(r, 200));
+
+            // 关闭端口
+            await port.close();
+            logDiv.innerHTML += `<div class="log-entry" style="color: #28a745;">端口[${i}]: 断电成功</div>`;
+            successCount++;
+          } catch (e) {
+            logDiv.innerHTML += `<div class="log-entry" style="color: #dc3545;">端口[${i}]: 断电失败 - ${e.message}</div>`;
+            // 尝试强制关闭
+            try { if (port.readable) await port.close(); } catch (e) { }
+          }
+        }
+
+        logDiv.innerHTML += `<div class="log-entry" style="color: #28a745; font-weight: bold;">断电操作完成，成功: ${successCount}/${ports.length}</div>`;
+
+      } catch (e) {
+        logDiv.innerHTML += `<div class="log-entry" style="color: #dc3545;">断电操作异常: ${e.message}</div>`;
+      }
+
+      // 3秒后隐藏日志
+      setTimeout(() => {
+        logDiv.classList.remove('show');
+      }, 3000);
+    }
+
+    // 验证配置是否有效
+    function validateConfiguration() {
+      if (authorizedPorts.length === 0) return false;
+      if (Object.keys(portMapping).length === 0) return false;
+      return true;
+    }
+
+    // 检查Node服务
+    async function checkNodeService() {
+      const statusDiv = document.getElementById('system-status');
+      try {
+        const response = await fetch(`${NODE_SERVER}/api/health`, {
+          method: 'GET',
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          statusDiv.className = 'system-status connected';
+          statusDiv.textContent = `✓ Node.js服务运行正常`;
+          return true;
+        }
+      } catch (e) {
+        console.log('Node服务未连接:', e);
+      }
+      statusDiv.className = 'system-status error';
+      statusDiv.innerHTML = `✗ Node.js服务未连接<br><span style="font-size: 11px;">请运行: node server.js</span>`;
+      return false;
+    }
+
+    // 一键授权并自动识别
+    async function authorizeAndAutoDetect() {
+      const btn = document.getElementById('btn-auto-detect');
+      const statusDiv = document.getElementById('auth-status');
+      const errorDiv = document.getElementById('error-detail');
+      errorDiv.classList.remove('show');
+
+      btn.disabled = true;
+      statusDiv.textContent = '正在连接Node服务...';
+
+      // 1. 检查Node服务
+      const nodeReady = await checkNodeService();
+      if (!nodeReady) {
+        btn.disabled = false;
+        statusDiv.innerHTML = '<span style="color: #dc3545;">Node服务未启动</span>';
+        return;
+      }
+
+      // 2. 获取系统COM端口
+      statusDiv.textContent = '正在获取系统COM端口列表...';
+      try {
+        const response = await fetch(`${NODE_SERVER}/api/com-ports`, {
+          method: 'GET',
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || '获取失败');
+        systemComPorts = data.ports || [];
+        console.log('系统COM端口:', systemComPorts);
+      } catch (e) {
+        statusDiv.innerHTML = `<span style="color: #dc3545;">获取COM端口失败: ${e.message}</span>`;
+        btn.disabled = false;
+        return;
+      }
+
+      // 3. 浏览器授权（关键步骤：获取新的授权端口列表）
+      statusDiv.textContent = '请在弹出的对话框中授权访问串口设备...';
+      try {
+        // 这会弹出浏览器授权对话框
+        await navigator.serial.requestPort();
+        statusDiv.textContent = '授权成功，正在获取端口列表...';
+      } catch (e) {
+        statusDiv.innerHTML = `<span style="color: #dc3545;">浏览器授权失败: ${e.message}</span>`;
+        btn.disabled = false;
+        return;
+      }
+
+      // 4. 重新获取浏览器授权后的端口列表（关键！）
+      try {
+        authorizedPorts = await navigator.serial.getPorts();
+        console.log('授权后的端口列表:', authorizedPorts);
+        console.log('端口数量:', authorizedPorts.length);
+
+        // 打印每个端口的详细信息
+        authorizedPorts.forEach((port, idx) => {
+          const info = port.getInfo();
+          console.log(`端口[${idx}]:`, {
+            vid: info.usbVendorId?.toString(16),
+            pid: info.usbProductId?.toString(16),
+            readable: !!port.readable,
+            writable: !!port.writable
+          });
+        });
+      } catch (e) {
+        statusDiv.innerHTML = `<span style="color: #dc3545;">获取端口列表失败: ${e.message}</span>`;
+        btn.disabled = false;
+        return;
+      }
+
+      // 5. 匹配端口
+      statusDiv.textContent = '正在匹配端口...';
+      await matchPorts();
+
+      // 6. 清空之前的设备类型识别结果（确保重新授权后需要重新查询）
+      Object.keys(runtimeDeviceTypes).forEach(key => delete runtimeDeviceTypes[key]);
+
+      // 7. 保存配置（不包含设备类型）
+      savePortMapping();
+
+      // 8. 显示结果（设备类型为空）
+      displayDetectResult();
+      updateMainPortLists();
+
+      statusDiv.innerHTML = `
+        <span style="color: #28a745;">✓ 识别完成！</span><br>
+        授权端口: ${authorizedPorts.length} 个，匹配成功: ${Object.keys(portMapping).length} 个<br>
+        <span style="color: #f0ad4e;">请点击"智能查询设备类型"识别设备</span>
+      `;
+
+      // 启用智能查询按钮（只要有端口就启用）
+      if (authorizedPorts.length >= 1) {
+        document.getElementById('btn-query-devices').disabled = false;
+      }
+
+      btn.disabled = false;
+    }
+
+    // 仅保存端口映射（不包含设备类型）
+    function savePortMapping() {
+      localStorage.setItem('port_mapping_v2', JSON.stringify({
+        systemComPorts: systemComPorts,
+        portMapping: portMapping,
+        authorizedPortCount: authorizedPorts.length,
+        timestamp: new Date().toISOString()
+        // 注意：不保存设备类型，每次刷新后需要重新查询
+      }));
+
+      console.log('端口映射已保存（不含设备类型）');
+    }
+
+    // 匹配端口
+    async function matchPorts() {
+      portMapping = {};
+
+      for (let browserIdx = 0; browserIdx < authorizedPorts.length; browserIdx++) {
+        const browserPort = authorizedPorts[browserIdx];
+        const browserInfo = browserPort.getInfo();
+        const browserVid = browserInfo.usbVendorId?.toString(16).toUpperCase().padStart(4, '0');
+        const browserPid = browserInfo.usbProductId?.toString(16).toUpperCase().padStart(4, '0');
+
+        // 查找匹配的系统COM端口
+        const candidates = systemComPorts.filter(sysPort =>
+          sysPort.vendorId.toUpperCase() === browserVid &&
+          sysPort.productId.toUpperCase() === browserPid &&
+          !Object.values(portMapping).some(m => m.comName === sysPort.comName)
+        );
+
+        if (candidates.length > 0) {
+          portMapping[browserIdx] = candidates[0];
+          console.log(`匹配成功: [${browserIdx}] -> ${candidates[0].comName}`);
+        } else {
+          console.warn(`未找到匹配: [${browserIdx}] VID=${browserVid} PID=${browserPid}`);
+        }
+      }
+    }
+
+    // 智能查询设备类型（严格按照指定逻辑）
+    async function queryDevices() {
+      const btn = document.getElementById('btn-query-devices');
+      const statusDiv = document.getElementById('auth-status');
+      const logDiv = document.getElementById('query-log');
+      const statusMain = document.getElementById('system-status');
+
+      btn.disabled = true;
+      logDiv.innerHTML = '';
+      logDiv.classList.add('show');
+      statusMain.className = 'system-status processing';
+      statusMain.textContent = '正在进行智能设备查询...';
+
+      const log = (msg, type = 'info') => {
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(msg);
+      };
+
+      try {
+        // ==================== 步骤1 ====================
+        // 对所有授权端口发送查询指令 0xA0 0x01 0x05 0xA6
+        // 若返回 0xA0 0x01 0x00 0xA1 则标记该端口
+        log('步骤1: 对所有授权端口发送查询指令 0xA0 0x01 0x05 0xA6', 'info');
+
+        const markedPorts = []; // 存储标记端口的索引和端口对象
+
+        for (let i = 0; i < authorizedPorts.length; i++) {
+          const port = authorizedPorts[i];
+          const comName = portMapping[i]?.comName || `端口${i}`;
+
+          try {
+            // 打开端口
+            if (!port.readable || !port.writable) {
+              await port.open({ baudRate: 9600 });
+            }
+
+            // 发送查询指令
+            const response = await sendCommandAndRead(port, queryCommand, 1000);
+            log(`${comName}: 发送 0xA0 0x01 0x05 0xA6，响应 ${formatBytes(response)}`, 'info');
+
+            // 检查响应是否为 0xA0 0x01 0x00 0xA1
+            if (checkResponseExact(response, queryResponse)) {
+              log(`${comName}: ✓ 返回 0xA0 0x01 0x00 0xA1，标记为候选端口`, 'success');
+              markedPorts.push({
+                index: i,
+                comName: comName,
+                port: port,
+                isOpen: true
+              });
+            } else {
+              log(`${comName}: 响应不匹配，关闭端口`, 'error');
+              if (port.readable) await port.close();
+            }
+          } catch (e) {
+            log(`${comName}: 通信错误 - ${e.message}`, 'error');
+            try { if (port.readable) await port.close(); } catch (e) { }
+          }
+        }
+
+        if (markedPorts.length === 0) {
+          throw new Error('没有端口响应查询指令，请检查设备连接');
+        }
+
+        log(`步骤1完成: 标记了 ${markedPorts.length} 个端口`, 'success');
+
+        // ==================== 步骤2-4 遍历每个标记端口 ====================
+        // 对每个标记端口：
+        // 1. 发送 0xA0 0x01 0x03 0xA4，确认返回 0xA0 0x01 0x01 0xA2
+        // 2. 对所有未标记端口发送 0x02 0x06 0x00 0x00 0x00 0x31 0x48 0x2D
+        // 3. 根据响应判断设备类型
+        // 4. 发送 0xA0 0x01 0x02 0xA3 断电
+
+        log('步骤2-4: 遍历每个标记端口进行详细测试...', 'info');
+
+        // 收集所有未标记端口
+        const unmarkedPortIndices = [];
+        for (let i = 0; i < authorizedPorts.length; i++) {
+          if (!markedPorts.some(mp => mp.index === i)) {
+            unmarkedPortIndices.push(i);
+          }
+        }
+
+        log(`未标记端口: [${unmarkedPortIndices.join(', ')}]`, 'info');
+
+
+        // 遍历每个标记端口
+        for (let idx = 0; idx < markedPorts.length; idx++) {
+          const currentPort = markedPorts[idx];
+          log(`========== 测试标记端口[${idx + 1}/${markedPorts.length}]: ${currentPort.comName} ==========`, 'info');
+
+          // ---- 2.1 发送开电指令 0xA0 0x01 0x03 0xA4 ----
+          log(`向 ${currentPort.comName} 发送 0xA0 0x01 0x03 0xA4`, 'info');
+
+          let openSuccess = false;
+          try {
+            if (!currentPort.port.readable || !currentPort.port.writable) {
+              await currentPort.port.open({ baudRate: 9600 });
+              currentPort.isOpen = true;
+            }
+
+            const openResp = await sendCommandAndRead(currentPort.port, openCommand, 1000);
+            log(`${currentPort.comName}: 响应 ${formatBytes(openResp)}`, 'info');
+
+            if (checkResponseExact(openResp, openResponse)) {
+              log(`${currentPort.comName}: ✓ 返回 0xA0 0x01 0x01 0xA2，支持电源控制`, 'success');
+              openSuccess = true;
+            } else {
+              log(`${currentPort.comName}: ✗ 响应不匹配，跳过此端口`, 'error');
+              continue; // 跳过此端口，测试下一个
+            }
+          } catch (e) {
+            log(`${currentPort.comName}: 开电测试失败 - ${e.message}`, 'error');
+            continue; // 跳过此端口，测试下一个
+          }
+
+          // ---- 2.2 对所有未标记端口发送解调仪查询指令 ----
+          log(`向所有未标记端口发送 0x02 0x06 0x00 0x00 0x00 0x31 0x48 0x2D...`, 'info');
+
+          let foundSensor = false;
+
+          await waitSeconds(40)
+          console.log('等了40秒')
+          for (const unmarkedIdx of unmarkedPortIndices) {
+            const unmarkedPort = authorizedPorts[unmarkedIdx];
+            const unmarkedName = portMapping[unmarkedIdx]?.comName || `端口${unmarkedIdx}`;
+
+            try {
+              if (!unmarkedPort.readable || !unmarkedPort.writable) {
+                await unmarkedPort.open({ baudRate: 9600 });
+              }
+
+
+              const sensorResp = await sendCommandAndRead(unmarkedPort, sensorQueryCommand, 500);
+              log(`${unmarkedName}: 响应 ${formatBytes(sensorResp)}`, 'info');
+
+              // 检查是否返回 0x02 0x06 0x00 0x00 0x00 0x31 0x48 0x2D
+              if (checkResponseExact(sensorResp, sensorQueryResponse)) {
+                log(`${unmarkedName}: ✓ 匹配解调仪特征！`, 'success');
+                foundSensor = true;
+                // 关闭此端口，继续测试其他未标记端口
+                if (unmarkedPort.readable) await unmarkedPort.close();
+              } else {
+                log(`${unmarkedName}: 非解调仪响应`, 'error');
+                if (unmarkedPort.readable) await unmarkedPort.close();
+              }
+            } catch (e) {
+              log(`${unmarkedName}: 查询失败 - ${e.message}`, 'error');
+              try { if (unmarkedPort.readable) await unmarkedPort.close(); } catch (e) { }
+            }
+          }
+
+          // ---- 2.3 根据结果判断设备类型 ----
+          if (foundSensor) {
+            // 有未标记端口返回解调仪特征，则当前标记端口为解调仪电源
+            runtimeDeviceTypes[currentPort.index] = 'sensor';
+            log(`判断: ${currentPort.comName} 为 解调仪电源端口`, 'success');
+          } else {
+            // 没有未标记端口返回解调仪特征，则当前标记端口为雷达电源
+            runtimeDeviceTypes[currentPort.index] = 'radar';
+            log(`判断: ${currentPort.comName} 为 雷达电源端口`, 'success');
+          }
+
+          // ---- 2.4 发送断电指令 0xA0 0x01 0x02 0xA3 ----
+          log(`向 ${currentPort.comName} 发送断电指令 0xA0 0x01 0x02 0xA3`, 'info');
+
+          try {
+            const closeResp = await sendCommandAndRead(currentPort.port, closeCommand, 1000);
+            log(`${currentPort.comName}: 响应 ${formatBytes(closeResp)}`, 'info');
+
+            if (checkResponseExact(closeResp, closeResponse)) {
+              log(`${currentPort.comName}: ✓ 返回 0xA0 0x01 0x00 0xA1，断电成功`, 'success');
+            } else {
+              log(`${currentPort.comName}: 断电响应异常`, 'warning');
+            }
+
+            // 关闭端口
+            if (currentPort.port.readable) await currentPort.port.close();
+            currentPort.isOpen = false;
+
+          } catch (e) {
+            log(`${currentPort.comName}: 断电失败 - ${e.message}`, 'error');
+            try { if (currentPort.port.readable) await currentPort.port.close(); } catch (e) { }
+          }
+        }
+
+        log('========== 所有标记端口测试完成 ==========', 'info');
+
+        // ==================== 查询结束，更新UI ====================
+        log('查询功能结束，同步端口信息到下拉框...', 'info');
+
+        // 更新UI
+        displayDetectResult();
+        updateMainPortLists();
+
+        // 自动选择端口
+        const radarIndices = Object.entries(runtimeDeviceTypes)
+          .filter(([idx, type]) => type === 'radar')
+          .map(([idx]) => parseInt(idx));
+        const sensorIndices = Object.entries(runtimeDeviceTypes)
+          .filter(([idx, type]) => type === 'sensor')
+          .map(([idx]) => parseInt(idx));
+
+        // 选择第一个雷达和第一个解调仪
+        const radarIdx = radarIndices.length > 0 ? radarIndices[0] : null;
+        const sensorIdx = sensorIndices.length > 0 ? sensorIndices[0] : null;
+
+        if (radarIdx !== null || sensorIdx !== null) {
+          autoSelectDevicePorts(radarIdx, sensorIdx);
+        }
+
+        // 显示结果
+        let resultHtml = '<span style="color: #28a745;">✓ 智能查询完成！</span><br>';
+        if (radarIndices.length > 0) {
+          resultHtml += `雷达电源: ${radarIndices.map(i => portMapping[i]?.comName || `端口${i}`).join(', ')}<br>`;
+        }
+        if (sensorIndices.length > 0) {
+          resultHtml += `解调仪电源: ${sensorIndices.map(i => portMapping[i]?.comName || `端口${i}`).join(', ')}`;
+        }
+        statusDiv.innerHTML = resultHtml;
+
+        statusMain.className = 'system-status connected';
+        statusMain.textContent = '设备类型识别完成';
+
+      } catch (error) {
+        log(`查询失败: ${error.message}`, 'error');
+        statusDiv.innerHTML = `<span style="color: #dc3545;">查询失败: ${error.message}</span>`;
+        statusMain.className = 'system-status error';
+        statusMain.textContent = '设备查询失败';
+
+        // 确保所有端口关闭
+        for (const port of authorizedPorts) {
+          try { if (port.readable) await port.close(); } catch (e) { }
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    /*----------------------------------------------------------------------*/
+    // 延时函数
+    async function waitSeconds(seconds) {
+
+      return new Promise(resolve => {
+
+        setTimeout(resolve, seconds * 1000);
+      });
+    }
+
+    // 辅助函数：发送指令并读取响应
+    async function sendCommandAndRead(port, command, timeoutMs = 1500) {
+      const expectedLength = command.length;
+
+      // if (expectedLength === 8) {
+
+      //   await waitSeconds(40)
+      //   console.log('等待了40秒')
+      // }
+      if (!port.writable || !port.readable) {
+        throw new Error('端口未打开');
+      }
+
+      const writer = port.writable.getWriter();
+      const reader = port.readable.getReader();
+      const startTime = Date.now();
+      let receivedData = [];
+
+      // 预期响应长度 = 指令长度（根据协议，响应长度通常等于指令长度）
+      console.log('长度,验证指令', expectedLength, command)
+
+      try {
+        await writer.write(command);
+        while (Date.now() - startTime < timeoutMs) {
+          const { value, done } = await Promise.race([
+            reader.read(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('读取超时')), timeoutMs)
+            )
+          ]);
+
+          if (done) break;
+          if (value) {
+            receivedData = receivedData.concat(Array.from(value));
+            // 收到足够数据后提前退出
+            if (receivedData.length >= expectedLength) break;
+          }
+        }
+
+        console.log('返回接收数据', receivedData)
+        return receivedData;
+      } finally {
+        writer.releaseLock();
+        reader.releaseLock();
+      }
+    }
+
+    // 辅助函数：精确匹配响应
+    function checkResponseExact(data, expected) {
+      if (data.length < expected.length) return false;
+      for (let i = 0; i < expected.length; i++) {
+        if (data[i] !== expected[i]) return false;
+      }
+      return true;
+    }
+
+    // 辅助函数：格式化字节数组
+    function formatBytes(bytes) {
+      if (!bytes || bytes.length === 0) return '无数据';
+      return bytes.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0')).join(', ');
+    }
+
+    // 自动选择设备端口
+    function autoSelectDevicePorts(radarIdx, sensorIdx) {
+      const radarSelect = document.getElementById('port-radar');
+      const sensorSelect = document.getElementById('port-sensor');
+
+      if (radarIdx !== null) {
+        radarSelect.value = radarIdx.toString();
+        onPortChange('radar');
+
+        const radarStatus = document.getElementById('status-radar');
+        radarStatus.textContent = `已自动识别: ${portMapping[radarIdx]?.comName} (雷达电源)`;
+        radarStatus.className = 'status-tip connected';
+      }
+
+      if (sensorIdx !== null) {
+        sensorSelect.value = sensorIdx.toString();
+        onPortChange('sensor');
+
+        const sensorStatus = document.getElementById('status-sensor');
+        sensorStatus.textContent = `已自动识别: ${portMapping[sensorIdx]?.comName} (解调仪电源)`;
+        sensorStatus.className = 'status-tip connected';
+      }
+    }
+
+    // 显示结果
+    function displayDetectResult() {
+      const resultDiv = document.getElementById('detect-result');
+      const tbody = document.getElementById('port-table-body');
+      tbody.innerHTML = '';
+
+      const sortedMappings = Object.entries(portMapping).sort((a, b) => {
+        const numA = parseInt(a[1].comName.replace('COM', ''));
+        const numB = parseInt(b[1].comName.replace('COM', ''));
+        return numA - numB;
+      });
+
+      sortedMappings.forEach(([browserIdx, sysPort]) => {
+        const row = document.createElement('tr');
+
+        // 仅从运行时映射获取设备类型（刷新后为null）
+        const deviceType = runtimeDeviceTypes[browserIdx];
+
+        let typeHtml = '<span class="device-type unknown">-</span>';
+
+        if (deviceType === 'radar') {
+          typeHtml = '<span class="device-type radar">雷达电源</span>';
+        } else if (deviceType === 'sensor') {
+          typeHtml = '<span class="device-type sensor">解调仪电源</span>';
+        }
+
+        row.innerHTML = `
+          <td class="com-cell">${sysPort.comName}</td>
+          <td>${sysPort.vendorId}</td>
+          <td>${sysPort.productId}</td>
+          <td>${sysPort.manufacturer}</td>
+          <td>${typeHtml}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      resultDiv.classList.add('show');
+    }
+
+    // 更新主界面下拉框
+    function updateMainPortLists() {
+      ['radar', 'sensor'].forEach(deviceType => {
+        const select = document.getElementById(`port-${deviceType}`);
+        const onBtn = document.getElementById(`btn-${deviceType}-on`);
+        const statusTip = document.getElementById(`status-${deviceType}`);
+
+        select.innerHTML = '<option value="">-- 请选择系统COM端口 --</option>';
+
+        const sortedMappings = Object.entries(portMapping).sort((a, b) => {
+          const numA = parseInt(a[1].comName.replace('COM', ''));
+          const numB = parseInt(b[1].comName.replace('COM', ''));
+          return numA - numB;
+        });
+
+        sortedMappings.forEach(([browserIdx, sysPort]) => {
+          const option = document.createElement('option');
+          option.value = browserIdx;
+
+          // 仅从运行时映射获取设备类型
+          const deviceTypeLabel = runtimeDeviceTypes[browserIdx];
+
+          let labelText = sysPort.comName;
+          if (deviceTypeLabel === 'radar') {
+            labelText += ' [雷达电源]';
+          } else if (deviceTypeLabel === 'sensor') {
+            labelText += ' [解调仪电源]';
+          } else {
+            labelText += ` [${sysPort.manufacturer}]`;
+          }
+
+          option.textContent = labelText;
+          select.appendChild(option);
+        });
+
+        if (Object.keys(portMapping).length === 0) {
+          select.disabled = true;
+          onBtn.disabled = true;
+          statusTip.textContent = '请先点击"一键授权并自动识别"';
+          statusTip.className = 'status-tip warning';
+        } else {
+          select.disabled = false;
+          statusTip.textContent = `就绪: ${Object.keys(portMapping).length} 个端口可用`;
+          statusTip.className = 'status-tip';
+        }
+      });
+    }
+
+    // 端口选择变化
+    function onPortChange(deviceType) {
+      const select = document.getElementById(`port-${deviceType}`);
+      const onBtn = document.getElementById(`btn-${deviceType}-on`);
+      const value = select.value;
+
+      if (value === '') {
+        selectedPorts[deviceType] = null;
+        onBtn.disabled = true;
+        return;
+      }
+
+      const portIndex = parseInt(value);
+
+      // 验证索引有效性
+      if (portIndex < 0 || portIndex >= authorizedPorts.length) {
+        console.error(`无效端口索引: ${portIndex}, 可用范围: 0-${authorizedPorts.length - 1}`);
+        alert('端口配置已过期，请重新点击"一键授权并自动识别"');
+        select.value = '';
+        selectedPorts[deviceType] = null;
+        onBtn.disabled = true;
+        return;
+      }
+
+      selectedPorts[deviceType] = portIndex;
+
+      const otherDevice = deviceType === 'radar' ? 'sensor' : 'radar';
+      if (selectedPorts[otherDevice] === portIndex && powerState[otherDevice]) {
+        alert('该端口正在被另一个设备使用');
+        select.value = '';
+        selectedPorts[deviceType] = null;
+        onBtn.disabled = true;
+        return;
+      }
+
+      onBtn.disabled = false;
+    }
+
+    // 供电/断电控制
+    async function togglePower(device, turnOn) {
+      const onBtn = document.getElementById(`btn-${device}-on`);
+      const offBtn = document.getElementById(`btn-${device}-off`);
+      const portSelect = document.getElementById(`port-${device}`);
+      const statusTip = document.getElementById(`status-${device}`);
+      const block = document.getElementById(`block-${device}`);
+      const errorDiv = document.getElementById('error-detail');
+
+      const portIndex = selectedPorts[device];
+
+      // 关键检查1: 索引是否有效
+      if (portIndex === null || portIndex === undefined) {
+        alert('请先选择COM端口');
+        return;
+      }
+
+      // 关键检查2: 索引是否在有效范围内
+      if (portIndex < 0 || portIndex >= authorizedPorts.length) {
+        const errorMsg = `端口索引 ${portIndex} 无效，当前授权端口数: ${authorizedPorts.length}`;
+        console.error(errorMsg);
+        statusTip.textContent = '错误: ' + errorMsg;
+        statusTip.className = 'status-tip error';
+        errorDiv.textContent = errorMsg + '\n请重新点击"一键授权并自动识别"更新配置';
+        errorDiv.classList.add('show');
+        alert('端口配置已过期，请重新授权识别');
+        return;
+      }
+
+      // 关键检查3: 获取端口对象
+      const port = authorizedPorts[portIndex];
+      if (!port) {
+        const errorMsg = `端口对象不存在: authorizedPorts[${portIndex}]`;
+        console.error(errorMsg, 'authorizedPorts:', authorizedPorts);
+        statusTip.textContent = '错误: 端口对象不存在';
+        statusTip.className = 'status-tip error';
+        alert('端口对象无效，请重新授权');
+        return;
+      }
+
+      // 检查占用
+      const otherDevice = device === 'radar' ? 'sensor' : 'radar';
+      if (turnOn && selectedPorts[otherDevice] === portIndex && powerState[otherDevice]) {
+        alert('该端口正在被另一个设备使用');
+        return;
+      }
+
+      if (turnOn) {
+        try {
+          statusTip.textContent = '正在连接...';
+          statusTip.className = 'status-tip info';
+          errorDiv.classList.remove('show');
+
+          // 检查端口是否已打开
+          console.log(`尝试打开端口[${portIndex}]:`, {
+            readable: !!port.readable,
+            writable: !!port.writable
+          });
+
+          if (!port.readable || !port.writable) {
+            console.log(`端口未打开，正在打开...`);
+            await port.open({ baudRate: 9600 });
+            console.log(`端口打开成功`);
+          }
+
+          portHandles[device].port = port;
+
+          const receivedData = await readData(port, openCommand);
+          if (!checkResponse(receivedData, openResponse)) {
+            throw new Error('设备响应异常');
+          }
+
+          powerState[device] = true;
+          portSelect.disabled = true;
+          onBtn.disabled = true;
+          onBtn.className = 'control-btn btn-off';
+          offBtn.disabled = false;
+          offBtn.className = 'control-btn btn-off active';
+          offBtn.onclick = () => togglePower(device, false);
+
+          const comName = portMapping[portIndex]?.comName || `端口${portIndex}`;
+          statusTip.textContent = `已连接 - ${comName}`;
+          statusTip.className = 'status-tip connected';
+          block.classList.add('active-device');
+
+        } catch (error) {
+          console.error('供电失败:', error);
+          statusTip.textContent = '连接失败: ' + error.message;
+          statusTip.className = 'status-tip error';
+
+          // 如果端口打开失败，尝试清理
+          try {
+            if (port.readable || port.writable) {
+              await port.close();
+            }
+          } catch (e) {
+            // 忽略关闭错误
+          }
+
+          alert('供电失败: ' + error.message);
+        }
+      } else {
+        // 断电逻辑...
+        try {
+          statusTip.textContent = '正在断开...';
+          const port = portHandles[device].port || authorizedPorts[portIndex];
+
+          if (port && port.readable) {
+            await readData(port, closeCommand);
+            await port.close();
+          }
+
+          powerState[device] = false;
+          portHandles[device].port = null;
+          portSelect.disabled = false;
+          onBtn.disabled = false;
+          onBtn.className = 'control-btn btn-on';
+          offBtn.disabled = true;
+          offBtn.className = 'control-btn btn-off';
+          offBtn.onclick = null;
+          statusTip.textContent = '';
+          statusTip.className = 'status-tip';
+          block.classList.remove('active-device');
+
+        } catch (error) {
+          console.error('断电错误:', error);
+          // 强制重置状态
+          powerState[device] = false;
+          portHandles[device].port = null;
+          portSelect.disabled = false;
+          onBtn.disabled = false;
+          onBtn.className = 'control-btn btn-on';
+          offBtn.disabled = true;
+          offBtn.className = 'control-btn btn-off';
+          block.classList.remove('active-device');
+        }
+      }
+    }
+
+    // 串口通信
+    async function readData(sourcePort, command) {
+      // 检查端口有效性
+      if (!sourcePort) {
+        throw new Error('端口对象为空');
+      }
+      if (!sourcePort.writable || !sourcePort.readable) {
+        throw new Error('端口未打开或不可读写');
+      }
+
+      const writer = await sourcePort.writable.getWriter();
+      const reader = await sourcePort.readable.getReader();
+      const timeout = 1500;
+      const startTime = Date.now();
+      let receivedData = [];
+
+      try {
+        await writer.write(command);
+        while (true) {
+          const { value, done } = await Promise.race([
+            reader.read(),
+            new Promise(r => setTimeout(() => r({ value: null, done: false }), timeout))
+          ]);
+          if (value) receivedData = receivedData.concat(Array.from(value));
+          if (done || Date.now() - startTime > timeout) break;
+        }
+        writer.releaseLock();
+        reader.releaseLock();
+        return receivedData;
+      } catch (error) {
+        writer.releaseLock();
+        reader.releaseLock();
+        throw error;
+      }
+    }
+
+    function checkResponse(data, expected) {
+      if (data.length < expected.length) return false;
+      for (let i = 0; i < expected.length; i++) {
+        if (data[i] !== expected[i]) return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+
+</html>

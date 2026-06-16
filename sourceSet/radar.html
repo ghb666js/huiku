@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>获取雷达数据</title>
+</head>
+
+<body>
+
+  <h2>Fetch API 方式</h2>
+  <button onclick="getTankData()">获取数据</button>
+  <p>平均高度: <span id="avgHeight">--</span> m</p>
+  <pre id="fetchResult"></pre>
+
+
+  <script>
+    const API_URL = `http://192.168.1.120:33490/api/result_data/surface?tank_id=1&mode=round`; //获取实时曲面数据
+    async function getTankData() {
+      try {
+        // 替换为你的实际API地址
+        const response = await fetch(`${API_URL}`);
+
+        const result = await response.json();
+
+        // 获取 average_height
+        const averageHeight = result.data.average_height;
+
+        // 显示到页面
+        document.getElementById('avgHeight').textContent = averageHeight;
+
+        document.getElementById('fetchResult').textContent = JSON.stringify(result, null, 2);
+
+        console.log('平均高度:', averageHeight);
+
+        if (averageHeight >= 0 && averageHeight < 600) {
+          return 'G'
+        }
+        else if (averageHeight >= 600 && averageHeight < 1000) {
+          return 'Y'
+        }
+        else if (averageHeight >= 1000 && averageHeight < 1500) {
+          return "O"
+        }
+        else {
+          return "R"
+        }
+      } catch (err) {
+        console.error('请求失败:', err);
+        document.getElementById('avgHeight').textContent = '获取失败：' + err.message;
+        document.getElementById('fetchResult').textContent = '获取失败: ' + err.message;
+
+      }
+    }
+  </script>
+
+</body>
+
+</html>

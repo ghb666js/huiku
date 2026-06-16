@@ -1,8 +1,20 @@
 <template>
   <div class="main">
-    <big-control class="control"></big-control>
+    <big-control class="control" ></big-control>
+    <drawerT :show="showDrawer"></drawerT>
     <div id="screen" class="screen">
+      
       <monitorH></monitorH>
+      <deviceControl></deviceControl>
+      <healthyAssess></healthyAssess>
+      <button class="fullscreen-btn" @click="toggleFullscreen" title="全屏">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4H10V10H4V4Z" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 4H20V10H14V4Z" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 14H10V20H4V14Z" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 14H20V20H14V14Z" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -19,10 +31,18 @@ import { createReprocessing } from '@/three/reprocessing';
 import { darkMaterial } from '@/three/material'
 import {addParkWater} from '@/three/parkWater'
 import monitorH from '@/components/monitorH.vue'
+import drawerT from '@/components/drawerT.vue';
+import healthyAssess from '@/components/healthyAssess.vue'
+import deviceControl from '@/components/deviceControl.vue'
 let app, camera, scene, renderer, controls, clock, reprocessing, materials={}
 export default {
   name: 'HomeView',
-  components: { bigControl,monitorH },
+  components: { bigControl,monitorH,drawerT,healthyAssess,deviceControl },
+  data() {
+    return {
+      showDrawer: true // 默认首页显示侧拉框
+    }
+  },
   methods: {
     async initZThree() {
       app = await new ZThree('screen');
@@ -90,9 +110,19 @@ export default {
         TWEEN.update()
       })
     
-    }
+    },
+    toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    },
     //开启辉光
-    ,
     darkenNonBloomed(obj) {
       if (obj.isMesh && app.bloomLayer.test(obj.layers) === false) {
         materials[obj.uuid] = obj.material;
@@ -109,6 +139,13 @@ export default {
   },
   mounted() {
     this.initZThree();
+    // 监听 bigControl 的激活模块变化，只有在“首页”时显示 drawerT
+    this._onBigControlActive = (name) => { this.showDrawer = (name === '科创项目简介'); };
+    this.$EventBus.$on('bigcontrol-active', this._onBigControlActive);
+  },
+  beforeDestroy() {
+    try{ this.$EventBus.$off('bigcontrol-active', this._onBigControlActive); }catch(e){console.log(e);
+    }
   },
  
 }
@@ -124,10 +161,10 @@ export default {
   .control {
     // height: 70%;
     position: absolute;
-    top: 20%;
+    top: 10%;
     // bottom: 3%;
     border-radius: 5%;
-    left: 80%;
+    left: 90%;
     width: 20%;
     transform: translateX(-50%);
     z-index: 3;
@@ -144,5 +181,34 @@ export default {
   height: 100%;
   top: 0;
   left: 0;
+  
+  .fullscreen-btn {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(0, 64, 128, 0.8) 0%, rgba(0, 32, 64, 0.9) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+    z-index: 1000;
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba(0, 96, 192, 0.8) 0%, rgba(0, 48, 96, 0.9) 100%);
+      border-color: #00d4ff;
+      box-shadow: 0 6px 16px rgba(0, 212, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
 }
 </style>

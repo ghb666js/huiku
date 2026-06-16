@@ -7,20 +7,20 @@
             </label>
         </form>
         <!-- 楼层返回 -->
-        <div class="back animated fadeIn" @click="backFloorBase" v-if="isShowLayers">
+        <!-- <div class="back animated fadeIn" @click="backFloorBase" v-if="isShowLayers">
             <img src="./../assets/image/back.png" alt="" />
             <p>返回</p>
-        </div>
+        </div> -->
         <!-- 楼层UI -->
-        <layer v-if="isShowLayers" :layers="layerData" :active="currentLayer" @change="changeLayer"
+        <!-- <layer v-if="isShowLayers" :layers="layerData" :active="currentLayer" @change="changeLayer"
             :styles="{ top: '60%', left: '60%', height: '400px',flexDirection: 'column', alignItems: 'center',gap: '8px',whiteSpace: 'nowrap' }"></layer>
         <layer v-show="isShowBriges" :layers="brigeData" :active="currentBrige" @change="changeBrige"
-        :styles="{ top: '25%', left: '10%', height: 'auto', flexDirection: 'column', alignItems: 'center',gap: '8px',whiteSpace: 'nowrap',}" ></layer>
-        <layer v-show="isShowMonitor" :layers="monitorData" :active="currentMonitor" @change="changeMonitor"
-        :styles="{ top: '86%', left: '37%', height: 'auto', flexDirection: 'row', alignItems: 'center',gap: '8px',whiteSpace: 'nowrap',}" ></layer>
+        :styles="{ top: '25%', left: '10%', height: 'auto', flexDirection: 'column', alignItems: 'center',gap: '8px',whiteSpace: 'nowrap',}" ></layer> -->
+        <!-- <layer v-show="isShowMonitor" :layers="monitorData" :active="currentMonitor" @change="changeMonitor"
+        :styles="{ top: '86%', left: '37%', height: 'auto', flexDirection: 'row', alignItems: 'center',gap: '8px',whiteSpace: 'nowrap',}" ></layer> -->
         <!-- 提示框 -->
-        <tooltip v-show="roomTooltipStyle.show" :style="{ left: roomTooltipStyle.x + 'px', top: roomTooltipStyle.y + 'px' }"
-            :data="roomTooltipStyle"></tooltip>
+        <!-- <tooltip v-show="roomTooltipStyle.show" :style="{ left: roomTooltipStyle.x + 'px', top: roomTooltipStyle.y + 'px' }"
+            :data="roomTooltipStyle"></tooltip> -->
     </div>
 </template>
 
@@ -35,12 +35,16 @@ import { healthMonitor, hideMonitor } from '@/three/healthyMonitor'
 import { loaderCartoon, destroyCartoon } from '@/three/cartoon'
 import layer from '@/components/layer'
 import tooltip from '@/components/tooltip'
-// import EventBus from '@/bus'
+import EventBus from '@/bus'
+// import { title } from 'echarts/lib/theme/dark'
 // import monitorH from '@/components/monitorH.vue'
 export default {
-    components: { layer, tooltip },
+    components: { 
+        // layer, tooltip 
+    },
     data() {
         return {
+            isShowDrawer: this.showDrawer,
             roomTooltipStyle: {
                 show: false,
                 x: 0,
@@ -49,8 +53,9 @@ export default {
             },
             controls: [
                 {
-                    name: '首页',
+                    name: '科创项目简介',
                     goFunction: () => {
+                        
                         app.flyTo({
                             position: app.cameraPosition,
                             controls: app.controlsTarget
@@ -59,7 +64,7 @@ export default {
                     backFunction: () => { }
                 },
                 {
-                    name:'工艺流程',
+                    name:'灰库运行工艺',
                     goFunction: () => {
                         // flyToTarget(window.app,{position: [0,0,60],controls: [0,1,0],})
                         loaderCartoon(window.app)
@@ -71,32 +76,46 @@ export default {
                     }
                 },
                 {
-                    name: '桥架管理',
+                    name: '系统功能配置',
                     goFunction: () => {
-                        loaderFloorManage(window.app)
+                        // loaderFloorManage(window.app)
+                        // loaderParkWater(window.app)
+                        // this.isShowDevices = true
+                        // console.log(this.isShowMonitor)            
+                        // healthMonitor(this.currentMonitor)   
+                        EventBus.$emit('deviceControlUI',{
+                            show: true,
+                            name: this.currentDevice
+                        })
                     },
                     backFunction: () => {
+                        // hideMonitor()
+                        EventBus.$emit('deviceControlUI',{
+                            show: false,
+                        })
+                        this.currentDevice =  '监测硬件配置'
+                        // this.isShowDevices = false
                         // destroyParkElectricity(window.app)
-                        destroyControlsGroup(window.app, 'floorText-3d')
-                        this.isShowLayers = false
-                        // this.isShowBriges = false
-                        this.roomTooltipStyle.show = false
-                        if (this.curFloorModel && this.currentLayer !== '传感器') {
-                            this.currentLayer = '传感器'
-                            setModelLayer(window.app, this.curFloorModel, this.currentLayer, this.layerData,
-                                () => {
-                                    setModelDefaultMaterial(window.app)//将 Three.js 场景中的所有模型材质恢复为默认材质（通常是取消高亮、还原初始状态）。
-                                    this.curFloorModel = null//将当前选中的楼层模型引用清空，表示当前没有选中的楼层。
-                                }
-                            )
-                            // destroyParkElectricity(window.app)
-                        } else {
-                            setModelDefaultMaterial(window.app)
-                        }
+                        // destroyControlsGroup(window.app, 'floorText-3d')
+                        // this.isShowLayers = false
+                        // // this.isShowBriges = false
+                        // this.roomTooltipStyle.show = false
+                        // if (this.curFloorModel && this.currentLayer !== '传感器') {
+                        //     this.currentLayer = '传感器'
+                        //     setModelLayer(window.app, this.curFloorModel, this.currentLayer, this.layerData,
+                        //         () => {
+                        //             setModelDefaultMaterial(window.app)//将 Three.js 场景中的所有模型材质恢复为默认材质（通常是取消高亮、还原初始状态）。
+                        //             this.curFloorModel = null//将当前选中的楼层模型引用清空，表示当前没有选中的楼层。
+                        //         }
+                        //     )
+                        //     // destroyParkElectricity(window.app)
+                        // } else {
+                        //     setModelDefaultMaterial(window.app)
+                        // }
                     }
                 }, 
                 {
-                    name: '健康监测',
+                    name: '孪生健康监测',
                     goFunction: () => {
                         // loaderParkWater(window.app)
                         this.isShowMonitor = true
@@ -106,12 +125,12 @@ export default {
                     backFunction: () => {
                         // destroyParkWater(window.app)
                         hideMonitor()
-                        this.currentMonitor =  '监测硬件配置'
+                        this.currentMonitor =  '灰库异常分布'
                         this.isShowMonitor = false
                     }
                 },
                 {
-                    name: '形貌监测',
+                    name: '雷达形貌监测',
                     goFunction: () => {
                         loaderParkRadar(window.app)
                     },
@@ -120,16 +139,21 @@ export default {
                     }
                 },
                 {
-                    name: '健康评估',
+                    name: '仓体健康评估',
                     goFunction: () => {    
                         flyToTarget(window.app,{position: [30,15,30],controls: [5,15,5],})
-                        loaderParkElectricity(window.app,this.currentBrige)
+                        // loaderParkElectricity(window.app,this.currentBrige)
+                        EventBus.$emit('healthassessUI',{
+                            show: true,
+                        })
                     },
                     backFunction: () => {
-                        destroyParkElectricity(window.app)
+                        // destroyParkElectricity(window.app)
                         this.isShowBriges = false
                         this.currentBrige = '桥架选择'
-                        
+                        EventBus.$emit('healthassessUI',{
+                            show: false,
+                        })
                     }
                 }
             ],
@@ -137,13 +161,15 @@ export default {
             isShowLayers: false,
             isShowBriges: false,
             isShowMonitor: false,
+            isShowDevices:false,
             currentLayer: '传感器',
             currentBrige: '桥架选择',
-            currentMonitor: '监测硬件配置',
+            currentMonitor: '灰库异常分布',
+            currentDevice: '监测硬件配置',
             brigeData:[],
             // 楼层层数
             layerData: [],
-            monitorData:['监测硬件配置','采集时间配置','即采数据显示','历史数据查询'],
+            // monitorData:['监测硬件配置','采集时间配置','即采数据显示','历史数据查询'],
             // 楼层模型
             curFloorModel: null,
             currentModel:null,
@@ -154,11 +180,8 @@ export default {
         this.$EventBus.$on('changeBrigeUI', (brige,app) => {
             // console.log(1);
             num++
-            // console.log(num);
-            this.isShowBriges = brige.isShowFloorBack
+            // this.isShowBriges = brige.isShowFloorBack
             this.currentModel = brige.model
-            // console.log(app.model);
-            // console.log(this.currentModel);
             
             if(num === 1){
                 // console.log(3);
@@ -206,14 +229,17 @@ export default {
         });
 
         // 添加监听器，接收来自monitorH.vue的事件
-        this.$EventBus.$on('updateCurrentMonitor', (monitorName) => {
-            this.currentMonitor = monitorName;
-        });
+        // this.$EventBus.$on('updateCurrentMonitor', (monitorName) => {
+        //     this.currentMonitor = monitorName;
+        //     if (this.isShowMonitor) {
+        //         healthMonitor(this.currentMonitor);
+        //     }
+        // });
 
         // this.moveLayersToScreen();
     },
     updated() {
-        console.log(this.roomTooltipStyle.show);
+        // console.log(this.roomTooltipStyle.show);
         this.moveLayersToScreen();
     },
     methods: {
@@ -298,6 +324,8 @@ export default {
             oldControl[0].backFunction();
             const newControl = this.controls.filter((item) => item.name === this.controls[newVal].name);
             newControl[0].goFunction();
+            // Emit event to notify current active module
+            this.$EventBus.$emit('bigcontrol-active', newControl[0].name);
         },
         //使标签在显示后再点击鼠标隐藏标签
         roomTooltipStyle(){
@@ -350,6 +378,7 @@ export default {
     flex-wrap: wrap;
     flex-flow: column nowrap;
     justify-content: space-between;
+    z-index: 50;
     // margin: 20px;
 }
 
