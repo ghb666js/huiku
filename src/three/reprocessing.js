@@ -16,10 +16,10 @@ export function createReprocessing(app) {
 
   // 辉光
   const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    new THREE.Vector2(app.el.offsetWidth, app.el.offsetHeight),
     1.5,
     0.4,
-    0.85 
+    0.85
   );
   const bloomParams = {
     exposure: 0.195, // 整个渲染结果的亮度
@@ -74,40 +74,20 @@ export function createReprocessing(app) {
   const finalComposer = new EffectComposer(app.renderer);
   finalComposer.addPass(renderScene);
   finalComposer.addPass(finalPass);
+
+  // 抗锯齿：后处理渲染到 render target 会丢失默认帧缓冲的 MSAA，需手动开启多重采样
+  [bloomComposer, finalComposer].forEach(c => {
+    c.renderTarget1.samples = 4;
+    c.renderTarget2.samples = 4;
+  });
+
+  // FXAA 边缘抗锯齿（放在最后一环）
+  const fxaaPass = new ShaderPass(FXAAShader);
+  const pixelRatio = app.renderer.getPixelRatio();
+  fxaaPass.material.uniforms['resolution'].value.x = 1 / (app.el.offsetWidth * pixelRatio);
+  fxaaPass.material.uniforms['resolution'].value.y = 1 / (app.el.offsetHeight * pixelRatio);
+  finalComposer.addPass(fxaaPass);
   app.finalComposer = finalComposer;
-
-//   const gui = app.gui;
-
-//   const folderBloom = gui.addFolder('辉光');
-//   folderBloom.close();
-//   app.renderer.toneMappingExposure = 0.895;
-
-//   folderBloom.add(bloomParams, 'exposure', 0.1, 2).onChange(function(value) {
-//     app.renderer.toneMappingExposure = Math.pow(value, 4.0);
-//   });
-
-//   folderBloom.add(bloomParams, 'bloomThreshold', 0.0, 1.0).onChange(function(value) {
-//     bloomPass.threshold = Number(value);
-//   });
-
-//   folderBloom.add(bloomParams, 'bloomStrength', 0.0, 3.0).onChange(function(value) {
-//     bloomPass.strength = Number(value);
-//   });
-
-//   folderBloom
-//     .add(bloomParams, 'bloomRadius', 0.0, 1.0)
-//     .step(0.01)
-//     .onChange(function(value) {
-//       bloomPass.radius = Number(value);
-//     });
-
-  // 抗锯齿
-  // const fxaaPass = new ShaderPass(FXAAShader);
-  // const pixelRatio = app.renderer.getPixelRatio();
-
-  // fxaaPass.material.uniforms['resolution'].value.x = 1 / (app.el.offsetWidth * pixelRatio);
-  // fxaaPass.material.uniforms['resolution'].value.y = 1 / (app.el.offsetHeight * pixelRatio);
-  // bloomComposer.addPass(fxaaPass);
 
   // 边缘高亮
   const outlinePass = new OutlinePass(
@@ -115,6 +95,8 @@ export function createReprocessing(app) {
     app.scene,
     app.camera
   );
+  // 让 OutlinePass 分辨率与 canvas 一致（含像素比）
+  outlinePass.setSize(app.el.offsetWidth, app.el.offsetHeight);
 
   const outlineParams = {
     edgeStrength: 10,
@@ -135,23 +117,6 @@ export function createReprocessing(app) {
   app.outlinePass = outlinePass;
   bloomComposer.addPass(outlinePass);
 
-//   const folderOutLine = gui.addFolder('边缘线');
-//   folderOutLine.close();
-//   folderOutLine.add(outlineParams, 'edgeStrength', 0.01, 10).onChange(function(value) {
-//     outlinePass.edgeStrength = Number(value);
-//   });
-
-//   folderOutLine.add(outlineParams, 'edgeGlow', 0.0, 1).onChange(function(value) {
-//     outlinePass.edgeGlow = Number(value);
-//   });
-
-//   folderOutLine.add(outlineParams, 'edgeThickness', 1, 4).onChange(function(value) {
-//     outlinePass.edgeThickness = Number(value);
-//   });
-
-//   folderOutLine.add(outlineParams, 'pulsePeriod', 0.0, 5).onChange(function(value) {
-//     outlinePass.pulsePeriod = Number(value);
-//   });
 
   return bloomComposer;
 }

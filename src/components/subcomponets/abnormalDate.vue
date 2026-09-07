@@ -5,7 +5,7 @@
     <div class="main-container">
       <div class="letter-container" id="letterContainer">
         <div class="letter-title">库壁应力计</div>
-        <div style="display: flex; align-items: flex-end; gap: 20px;">
+        <div style="display: flex; align-items: flex-end; gap: 1vw;">
           <!-- A区域: 10个 = 1列 -->
           <div class="letter-item">
             <div class="letter">A</div>
@@ -333,6 +333,7 @@ export default {
   name: 'abnormalDate',
   data() {
     return {
+      sensorData:[],
       // 状态映射：0=正常, 1=数据异常, 2=通讯异常, null=设备异常
       statusMap: {
         0: { class: 'status-normal', text: '工作正常' },
@@ -343,8 +344,19 @@ export default {
     };
   },
   mounted() {
+    setInterval(async () => {
+      this.sensorData = await this.combineArr();
+    }, 1800000);
     // 页面加载完成后执行
     this.loadSensorData();
+  },
+  watch:{
+    sensorData:{
+      handler(){
+        this.loadSensorData();
+      },
+      deep:true
+    }
   },
   methods: {
     // 切换显示传感器ID
@@ -377,9 +389,9 @@ export default {
 
     async combineArr() {
       // 增加limit确保获取所有传感器数据
-      const strainData = await this.getHistoryData('strainStatus', 1000);
-      const tiltData = await this.getHistoryData('TiltStatus', 1000);
-      const settlementData = await this.getHistoryData('settlementstatus', 100);
+      const strainData = await this.getHistoryData('strainStatus', 199);
+      const tiltData = await this.getHistoryData('TiltStatus', 8);
+      const settlementData = await this.getHistoryData('settlementstatus', 7);
       return [...strainData, ...settlementData, ...tiltData];
     },
 
@@ -438,14 +450,13 @@ export default {
     // 加载传感器数据
     async loadSensorData() {
       try {
-        const sensorData = await this.combineArr();
-
+        if(!this.sensorData.length) this.sensorData = await this.combineArr();
         // 创建数据查找映射 - 同时存储原始ID和标准化后的ID
         const dataMap = {};
         const normalizedMap = {};
         let duplicateCount = 0;
 
-        sensorData.forEach(item => {
+        this.sensorData.forEach(item => {
           if (item.安装位置) {
             // 存储原始ID映射
             if (dataMap[item.安装位置]) {
@@ -572,8 +583,8 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1vw;
-  padding: 1vw;
+  gap: 0.5vw;
+  padding: 0.25vw;
   overflow-y: auto;
   background: rgba(0, 20, 40, 0.9);
   box-sizing: border-box;
@@ -583,20 +594,20 @@ export default {
   text-align: center;
   font-size: 1.2vw;
   font-weight: bold;
-  margin-bottom: 0.75vwvw;
+  margin-bottom: 0.5vwvw;
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 .main-container {
-  border: 3px solid rgba(0, 140, 255, 0.6);
-  border-radius: 8px;
+  border: 0.15vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.4vw;
   padding: 0.8vw;
   background: rgba(0, 40, 80, 0.7);
   display: flex;
   flex-direction: column;
   gap: 0.7vw;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(0, 140, 255, 0.1);
+  box-shadow: 0 0.2vw 0.6vw rgba(0, 0, 0, 0.3), inset 0 0 1vw rgba(0, 140, 255, 0.1);
   overflow: visible;
 }
 
@@ -605,7 +616,7 @@ export default {
   width: 1.5vw;
   height: 0.75vw;
   background: rgba(255, 255, 255, 0.767);
-  border: 1px solid #666;
+  border: 0.05vw solid #666;
   box-sizing: border-box;
   flex-shrink: 0;
   transition: all 0.3s ease;
@@ -631,7 +642,8 @@ export default {
 
 /* 提示框样式 - 悬停时显示，包含标号和信息 */
 .sensor-cell:hover::before {
-  content: attr(data-id) ': ' attr(data-tooltip);
+  /* attr(data-id) ': ' */
+  content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;
   left: 50%;
@@ -639,13 +651,13 @@ export default {
   background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 0.25vw 0.4vw;
-  border-radius: 4px;
+  border-radius: 0.2vw;
   font-size: 0.55vw;
   white-space: nowrap;
   z-index: 9999;
   margin-bottom: 0.25vw;
   pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0.1vw 0.4vw rgba(0, 0, 0, 0.5);
 }
 
 /* 库壁传感器容器 */
@@ -654,11 +666,11 @@ export default {
   flex-direction: column;
   align-items: center;
   padding: 0.5vw 1vw;
-  border: 2px solid rgba(0, 140, 255, 0.6);
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
   box-sizing: border-box;
   min-height: 12.5vw;
   background: rgba(0, 30, 60, 0.8);
-  border-radius: 6px;
+  border-radius: 0.3vw;
   overflow: visible;
 }
 
@@ -668,7 +680,7 @@ export default {
   margin-bottom: 0.5vw;
   color: #ffffff;
   text-align: center;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .letter-item {
@@ -693,8 +705,8 @@ export default {
   grid-template-rows: repeat(10, 1fr);
   gap: 0.1vw;
   padding: 0.4vw;
-  border: 2px solid rgba(0, 140, 255, 0.6);
-  border-radius: 4px;
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.2vw;
   box-sizing: border-box;
   height: 10vw;
   grid-auto-flow: column;
@@ -722,12 +734,12 @@ export default {
 /* 底部传感器区域 */
 .outer-frame {
   position: relative;
-  border: 2px solid rgba(0, 140, 255, 0.6);
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
   padding: 0.5vw 1vw 0.75vw;
   background: rgba(0, 30, 60, 0.8);
   margin-bottom: 0.75vw;
   box-sizing: border-box;
-  border-radius: 6px;
+  border-radius: 0.3vw;
   overflow: visible;
 }
 
@@ -772,13 +784,13 @@ export default {
   margin-bottom: 0.4vw;
   white-space: nowrap;
   color: #ffffff;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .bottom-box {
   height: 3vw;
-  border: 2px solid rgba(0, 140, 255, 0.6);
-  border-radius: 4px;
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.2vw;
   box-sizing: border-box;
   width: 100%;
   background: rgba(0, 20, 40, 0.8);
@@ -802,8 +814,8 @@ export default {
 /* 库底区域 */
 .kudi-container {
   position: relative;
-  border: 2px solid rgba(0, 140, 255, 0.6);
-  border-radius: 6px;
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.3vw;
   padding: 0.4vw 0.75vw;
   margin-top: 1vw;
   width: 100%;
@@ -822,7 +834,7 @@ export default {
   margin-bottom: 0.4vw;
   color: #ffffff;
   text-align: center;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .bottom-flex-row {
@@ -830,7 +842,7 @@ export default {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  gap: 2px;
+  gap: 0.1vw;
   width: 100%;
   height: 2.51vw;
   padding: 0 0.25vw;
@@ -850,8 +862,8 @@ export default {
   padding: 0.4vw;
   box-sizing: border-box;
   background: rgba(0, 30, 60, 0.8);
-  border: 2px solid rgba(0, 140, 255, 0.6);
-  border-radius: 6px;
+  border: 0.1vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.3vw;
 }
 
 .legend-item {
@@ -865,7 +877,7 @@ export default {
   font-size: 0.7vw;
   color: #ffffff;
   white-space: nowrap;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 /* 状态颜色定义 */

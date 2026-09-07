@@ -28,6 +28,11 @@ export function createParticleSystem(app) {
 
 export function loaderCartoon(app) {
   if (!app) return;
+  // 停止正在运行的flyTo动画，防止其修改已切换的camera
+  if (app._flyTween) {
+    app._flyTween.stop();
+    app._flyTween = null;
+  }
   app.model.children[0].children[11].traverse((obj) => {
         obj.visible = true;
   })
@@ -108,31 +113,6 @@ export function loaderCartoon(app) {
     console.warn('camera1 未定义，无法切换到 camera1');
   }
 
-  // const loader = new GLTFLoader();
-  // loader.load('model/store.glb', (gltf) => {
-  //   const model = gltf.scene;
-  //   app.scene.add(model); // 将模型添加到场景中
-
-  //   // 初始化动画混合器
-  //   mixer = new THREE.AnimationMixer(model);
-
-  //   // 提取动画剪辑
-  //   const animations = gltf.animations;
-  //   if (animations && animations.length > 0) {
-  //     const action = mixer.clipAction(animations[0]); // 播放第一个动画
-  //     action.play();
-  //   }
-
-  //   // 启动渲染循环
-  //   if (!app._isCartoonRendering) {
-  //     app._isCartoonRendering = true;
-  //     app.render(() => {
-  //       const delta = clock.getDelta(); // 获取时间增量
-  //       if (mixer) mixer.update(delta); // 更新动画
-  //       app.renderer.render(app.scene, app.camera);
-  //     });
-  //   }
-  // });
 }
 
 

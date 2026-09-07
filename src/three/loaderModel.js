@@ -13,8 +13,10 @@ export function loaderModel(app) {
         //模型地址
         url: "model/store.glb",
         onLoad: (object) => {
+          console.log("模型加载完成", object);
           app.scene.add(object.scene);
           app.model = object.scene;
+          app.animations = object.animations; // 保存动画供遥控进退使用
           //需要接收阴影的小模型
           const receiveModel = []
           // 使用辉光渲染的模型
@@ -29,9 +31,33 @@ export function loaderModel(app) {
               if(e.run){
                 app.mixer = new THREE.AnimationMixer(app.model);
                 const animations = object.animations;
+                console.log('动画列表:', animations.map(a => a.name));
                 if (animations && animations.length > 0) {
-                  const action = app.mixer.clipAction(animations[0]); // 播放第一个动画
-                  action.play();
+                  const runClips = animations.filter(a => a.name.includes('run'));
+                  console.log('播放动画:', runClips.map(a => a.name));
+                  // 清除旧的"全部播完"监听
+                  if (app._onRunMixerFinished) {
+                    app.mixer.removeEventListener('finished', app._onRunMixerFinished);
+                  }
+                  // 找到最长的一个动画
+                  let longest = runClips[0];
+                  runClips.forEach(clip => {
+                    const action = app.mixer.clipAction(clip);
+                    action.setLoop(THREE.LoopOnce);
+                    action.clampWhenFinished = true;
+                    action.play();
+                    if (clip.duration > longest.duration) longest = clip;
+                  });
+                  // 最长动画结束时，整体循环重播
+                  app._onRunMixerFinished = (e) => {
+                    if (e.action.getClip() === longest) {
+                      runClips.forEach(clip => {
+                        const a = app.mixer.clipAction(clip);
+                        a.reset().play();
+                      });
+                    }
+                  };
+                  app.mixer.addEventListener('finished', app._onRunMixerFinished);
                 }
               }
             });
@@ -41,6 +67,16 @@ export function loaderModel(app) {
             if (!obj.isMesh) return;
             const material = obj.material;
             if (!material) return;
+            // 提升贴图清晰度：各向异性过滤（改善小模型/倾斜视角模糊）
+            if (!app._maxAnisotropy) {
+              app._maxAnisotropy = app.renderer.capabilities.getMaxAnisotropy();
+            }
+            const mats = Array.isArray(material) ? material : [material];
+            mats.forEach(m => {
+              ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'aoMap'].forEach(key => {
+                if (m[key]) m[key].anisotropy = app._maxAnisotropy;
+              });
+            });
             // 只设置钢板库
            if(obj.name.indexOf('钢板库')>-1){
              // 配置所有纹理类型

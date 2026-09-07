@@ -63,7 +63,7 @@
           </select>
         </div>
         <div class="button-row">
-          <button class="control-btn btn-on" id="btn-radar-on" @click="togglePower('radar', true)" :disabled="!canPowerOn('radar')">供电</button>
+          <button class="control-btn btn-on" id="btn-radar-on" @click="togglePower('radar', true)" :disabled="powerState.radar || !canPowerOn('radar')">供电</button>
           <button class="control-btn btn-off" id="btn-radar-off" @click="togglePower('radar', false)" :disabled="!powerState.radar" :class="{ active: powerState.radar }">断电</button>
         </div>
         <div class="status-tip" id="status-radar" :class="statusClasses.radar">{{ statusMessages.radar }}</div>
@@ -81,7 +81,7 @@
           </select>
         </div>
         <div class="button-row">
-          <button class="control-btn btn-on" id="btn-sensor-on" @click="togglePower('sensor', true)" :disabled="!canPowerOn('sensor')">供电</button>
+          <button class="control-btn btn-on" id="btn-sensor-on" @click="togglePower('sensor', true)" :disabled="powerState.sensor || !canPowerOn('sensor')">供电</button>
           <button class="control-btn btn-off" id="btn-sensor-off" @click="togglePower('sensor', false)" :disabled="!powerState.sensor" :class="{ active: powerState.sensor }">断电</button>
         </div>
         <div class="status-tip" id="status-sensor" :class="statusClasses.sensor">{{ statusMessages.sensor }}</div>
@@ -143,9 +143,8 @@ export default {
   },
   computed: {
     sortedPorts() {
-      console.log('sortedPorts - runtimeDeviceTypes:', this.runtimeDeviceTypes);
-      console.log('sortedPorts - portMapping:', this.portMapping);
-      
+      // console.log('sortedPorts - runtimeDeviceTypes:', this.runtimeDeviceTypes);
+      // console.log('sortedPorts - portMapping:', this.portMapping);
       const result = Object.entries(this.portMapping)
         .map(([browserIdx, sysPort]) => {
           const deviceType = this.runtimeDeviceTypes[browserIdx] || this.runtimeDeviceTypes[parseInt(browserIdx)];
@@ -336,6 +335,9 @@ export default {
           mode: 'cors',
           cache: 'no-cache'
         });
+        // const url = `${this.NODE_SERVER}/api/health`;
+        // console.log('实际请求地址:', url);  // ← 加这行
+        //  console.log('响应状态:', response.status);  // ← 加这行
         if (response.ok) {
           const data = await response.json();
           this.systemStatusClass = 'system-status connected';
@@ -346,7 +348,7 @@ export default {
         console.log('Node服务未连接:', e);
       }
       this.systemStatusClass = 'system-status error';
-      this.systemStatus = `✗ Node.js服务未连接<br><span style="font-size: 11px;">请运行: node server.js</span>`;
+      this.systemStatus = `✗ Node.js服务未连接<br><span style="font-size: 0.8vw;">请运行: node server.js</span>`;
       return false;
     },
     
@@ -636,7 +638,7 @@ export default {
             this.runtimeDeviceTypes[currentPort.index] = 'radar';
             this.runtimeDeviceTypes[currentPort.index.toString()] = 'radar';
             console.log(`设置设备类型: index=${currentPort.index} (${typeof currentPort.index}), type=radar`);
-            console.log(`runtimeDeviceTypes:`, this.runtimeDeviceTypes);
+            // console.log(`runtimeDeviceTypes:`, this.runtimeDeviceTypes);
             log(`${currentPort.comName}: 为 雷达电源端口`, 'success');
           }
 
@@ -668,9 +670,9 @@ export default {
         // ==================== 查询结束，更新UI ====================
         log('查询功能结束，同步端口信息到下拉框...', 'info');
 
+        await this.matchPorts();
         // 更新UI
         this.updateMainPortLists();
-
         // 自动选择端口
         const radarIndices = Object.entries(this.runtimeDeviceTypes)
           .filter(([idx, type]) => type === 'radar')
@@ -736,7 +738,7 @@ export default {
       let receivedData = [];
 
       // 预期响应长度 = 指令长度（根据协议，响应长度通常等于指令长度）
-      console.log('长度,验证指令', expectedLength, command);
+      // console.log('长度,验证指令', expectedLength, command);
 
       try {
         await writer.write(command);
@@ -756,7 +758,7 @@ export default {
           }
         }
 
-        console.log('返回接收数据', receivedData);
+        // console.log('返回接收数据', receivedData);
         return receivedData;
       } finally {
         writer.releaseLock();
@@ -1028,76 +1030,77 @@ export default {
   font-size: 1vw;
   font-weight: bold;
   color: #ffffff;
-  margin-bottom: 10px;
-  letter-spacing: 2px;
+  margin-bottom: 0.5vw;
+  letter-spacing: 0.1vw;
   text-align: center;
   flex-shrink: 0;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 .system-status {
   text-align: center;
-  margin-bottom: 10px;
-  padding: 10px;
+  margin-bottom: 0.5vw;
+  padding: 0.5vw;
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.6);
-  border-radius: 4px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.2vw;
   font-size: 0.8vw;
   color: #ffffff;
   flex-shrink: 0;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 .system-status.connected {
   background-color: rgba(20, 80, 20, 0.7);
   border-color: rgba(0, 255, 100, 0.6);
   color: #ffffff;
-  box-shadow: inset 0 0 10px rgba(0, 255, 100, 0.3);
+  box-shadow: inset 0 0 0.5vw rgba(0, 255, 100, 0.3);
 }
 
 .system-status.error {
   background-color: rgba(80, 20, 20, 0.7);
   border-color: rgba(255, 0, 0, 0.6);
   color: #ffffff;
-  box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.3);
+  box-shadow: inset 0 0 0.5vw rgba(255, 0, 0, 0.3);
 }
 
 .system-status.processing {
   background-color: rgba(80, 60, 20, 0.7);
   border-color: rgba(255, 200, 0, 0.6);
   color: #ffffff;
-  box-shadow: inset 0 0 10px rgba(255, 200, 0, 0.3);
+  box-shadow: inset 0 0 0.5vw rgba(255, 200, 0, 0.3);
 }
 
 .auth-section {
   text-align: center;
-  margin-bottom: 10px;
-  padding: 15px;
+  margin-bottom: 0.5vw;
+  padding: 0.75vw;
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.6);
-  border-radius: 4px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.2vw;
   flex-shrink: 0;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
   max-height: 15vh;
   overflow-y: auto;
 }
 
 .auth-btn {
-  padding: 8px 20px;
+  padding: 0.4vw 1vw;
   font-size: 0.7vw;
   background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
   color: #ffffff;
-  border: 1px solid #0088ff;
-  border-radius: 6px;
+  border: 0.05vw solid #0088ff;
+  border-radius: 0.3vw;
   cursor: pointer;
   font-family: "SimSun", "宋体", "Microsoft YaHei", serif;
-  margin: 0 5px;
+  margin: 0 0.25vw;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0.05vw 0.05vw rgba(0, 0, 0, 0.3);
 }
+
 
 .auth-btn:before {
   content: '';
@@ -1113,8 +1116,8 @@ export default {
 .auth-btn:hover {
   background: linear-gradient(180deg, #0088ff 0%, #0066cc 100%);
   border-color: #00aaff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 136, 255, 0.4);
-  transform: translateY(-2px);
+  box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.3), 0 0 0.75vw rgba(0, 136, 255, 0.4);
+  transform: translateY(-0.1vw);
 }
 
 .auth-btn:hover:before {
@@ -1129,7 +1132,7 @@ export default {
 .auth-btn.warning:hover {
   background: linear-gradient(180deg, #ffaa00 0%, #ff8800 100%);
   border-color: #ffcc00;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 136, 0, 0.4);
+  box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.3), 0 0 0.75vw rgba(255, 136, 0, 0.4);
 }
 
 .auth-btn:disabled {
@@ -1148,23 +1151,23 @@ export default {
 .auth-status {
   font-size: 0.7vw;
   color: #ffffff;
-  margin-top: 10px;
+  margin-top: 0.5vw;
   line-height: 1.5;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .detect-result {
   background-color: rgba(20, 80, 20, 0.7);
-  border: 2px solid rgba(0, 255, 100, 0.6);
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
+  border: 0.1vw solid rgba(0, 255, 100, 0.6);
+  border-radius: 0.3vw;
+  padding: 0.5vw;
+  margin-bottom: 0.5vw;
   display: none;
   flex-shrink: 0;
   overflow-x: auto;
   overflow-y: auto;
   max-height: 25vh;
-  box-shadow: inset 0 0 10px rgba(0, 255, 100, 0.3);
+  box-shadow: inset 0 0 0.5vw rgba(0, 255, 100, 0.3);
 }
 
 .detect-result.show {
@@ -1176,10 +1179,10 @@ export default {
   font-size: 0.75vw;
   font-weight: bold;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 0.4vw;
   text-align: center;
   flex-shrink: 0;
-  text-shadow: 0 0 10px rgba(0, 255, 100, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 255, 100, 0.8);
 }
 
 .port-table {
@@ -1192,9 +1195,9 @@ export default {
 
 .port-table th,
 .port-table td {
-  padding: 4px 6px;
+  padding: 0.2vw 0.3vw;
   text-align: left;
-  border-bottom: 1px solid rgba(0, 255, 100, 0.3);
+  border-bottom: 0.05vw solid rgba(0, 255, 100, 0.3);
   color: #ffffff;
 }
 
@@ -1202,47 +1205,47 @@ export default {
   background-color: rgba(0, 100, 0, 0.7);
   color: #ffffff;
   font-weight: bold;
-  text-shadow: 0 0 5px rgba(0, 255, 100, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 255, 100, 0.5);
 }
 
 .port-table .com-cell {
   font-weight: bold;
   color: #00d4ff;
   font-size: 0.65vw;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .port-table .device-type {
   font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 3px;
+  padding: 0.1vw 0.4vw;
+  border-radius: 0.15vw;
   display: inline-block;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 0.15vw rgba(0, 0, 0, 0.5);
 }
 
 .device-type.radar {
   background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
   color: white;
-  border: 1px solid #0088ff;
+  border: 0.05vw solid #0088ff;
 }
 
 .device-type.sensor {
   background: linear-gradient(180deg, #008800 0%, #006600 100%);
   color: white;
-  border: 1px solid #00ff00;
+  border: 0.05vw solid #00ff00;
 }
 
 .device-type.unknown {
   color: #999;
   font-style: italic;
   background: linear-gradient(180deg, #666666 0%, #444444 100%);
-  border: 1px solid #888888;
+  border: 0.05vw solid #888888;
 }
 
 .control-panel {
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.6);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.3vw;
   padding: 0.75vw;
   overflow-y: auto;
   display: flex;
@@ -1250,7 +1253,7 @@ export default {
   gap: 1vw;
   justify-content: space-between;
   align-items: center;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
   height: 20vh;
   flex-shrink: 0;
 }
@@ -1258,8 +1261,8 @@ export default {
 .control-block {
   margin-bottom: 0;
   padding: 0.5vw;
-  border: 2px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
+  border: 0.1vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
   transition: all 0.3s ease;
   flex: 1;
   min-width: 15vw;
@@ -1270,13 +1273,13 @@ export default {
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 30, 60, 0.6);
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.1);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.1);
 }
 
 .control-block.active-device {
   border-color: rgba(0, 255, 100, 0.6);
   background-color: rgba(0, 40, 20, 0.6);
-  box-shadow: inset 0 0 15px rgba(0, 255, 100, 0.2);
+  box-shadow: inset 0 0 0.75vw rgba(0, 255, 100, 0.2);
 }
 
 .block-title1 {
@@ -1286,7 +1289,7 @@ export default {
   text-align: center;
   flex-shrink: 0;
   padding: 0.4vw 0;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 .port-row {
@@ -1304,20 +1307,20 @@ export default {
   font-weight: bold;
   color: #ffffff;
   white-space: nowrap;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .port-select {
   width: 9vw;
   height: 4vh;
   font-size: 0.65vw;
-  border: 1px solid rgba(0, 140, 255, 0.6);
+  border: 0.05vw solid rgba(0, 140, 255, 0.6);
   background-color: rgba(0, 30, 60, 0.8);
   color: #ffffff;
   text-align: center;
   text-align-last: center;
   font-family: "Consolas", "Courier New", monospace;
-  box-shadow: inset 0 0 5px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.25vw rgba(0, 212, 255, 0.2);
 }
 
 .port-select:disabled {
@@ -1339,8 +1342,8 @@ export default {
   width: 6vw;
   height: 3vh;
   font-size: 0.8vw;
-  border: 1px solid #0088ff;
-  border-radius: 6px;
+  border: 0.05vw solid #0088ff;
+  border-radius: 0.3vw;
   cursor: pointer;
   font-family: "SimSun", "宋体", "Microsoft YaHei", serif;
   display: flex;
@@ -1349,21 +1352,21 @@ export default {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.05vw 0.05vw rgba(0, 0, 0, 0.3);
 }
 
 .btn-on {
   background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
   color: #ffffff;
   border-color: #0088ff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.2);
 }
 
 .btn-on:hover {
   background: linear-gradient(180deg, #0088ff 0%, #0066cc 100%);
   border-color: #00aaff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 136, 255, 0.4);
-  transform: translateY(-2px);
+  box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.3), 0 0 0.75vw rgba(0, 136, 255, 0.4);
+  transform: translateY(-0.1vw);
 }
 
 .btn-on:disabled {
@@ -1388,14 +1391,14 @@ export default {
   color: #ffffff;
   border-color: #ff0000;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.2);
 }
 
 .btn-off.active:hover {
   background: linear-gradient(180deg, #ff0000 0%, #cc0000 100%);
   border-color: #ff4444;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 0, 0, 0.4);
-  transform: translateY(-2px);
+  box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.3), 0 0 0.75vw rgba(255, 0, 0, 0.4);
+  transform: translateY(-0.1vw);
 }
 
 .control-btn:before {
@@ -1422,41 +1425,41 @@ export default {
   font-size: 0.65vw;
   color: #ffffff;
   text-align: center;
-  margin-top: 5px;
+  margin-top: 0.25vw;
   height: 4vh;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 0.25vw rgba(0, 212, 255, 0.5);
 }
 
 .status-tip.connected {
   color: #00ff00;
   font-weight: bold;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 255, 0, 0.8);
 }
 
 .status-tip.error {
   color: #ff0000;
   font-weight: bold;
-  text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  text-shadow: 0 0 0.5vw rgba(255, 0, 0, 0.8);
 }
 
 .status-tip.warning {
   color: #ffcc00;
   font-weight: bold;
-  text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+  text-shadow: 0 0 0.5vw rgba(255, 204, 0, 0.8);
 }
 
 .status-tip.info {
   color: #00d4ff;
   font-weight: bold;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 .error-detail {
   background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  padding: 10px;
-  margin-top: 10px;
+  border: 0.05vw solid #f5c6cb;
+  border-radius: 0.2vw;
+  padding: 0.5vw;
+  margin-top: 0.5vw;
   font-size: 0.6vw;
   color: #721c24;
   font-family: "Consolas", monospace;
@@ -1469,10 +1472,10 @@ export default {
 
 .query-log {
   background: linear-gradient(180deg, #0088ff 0%, #0066cc 100%);
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 10px;
-  margin-top: 10px;
+  border: 0.05vw solid #dee2e6;
+  border-radius: 0.2vw;
+  padding: 0.5vw;
+  margin-top: 0.5vw;
   font-size: 0.6vw;
   font-family: "Consolas", monospace;
   max-height: 15vh;
@@ -1486,9 +1489,9 @@ export default {
 }
 
 .query-log .log-entry {
-  margin: 2px 0;
-  padding: 2px 0;
-  border-bottom: 1px dotted #ccc;
+  margin: 0.1vw 0;
+  padding: 0.1vw 0;
+  border-bottom: 0.05vw dotted #ccc;
 }
 
 .query-log .log-success {
@@ -1509,10 +1512,10 @@ export default {
 
 .refresh-shutdown-log {
   background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 4px;
-  padding: 10px;
-  margin-top: 10px;
+  border: 0.05vw solid #ffeaa7;
+  border-radius: 0.2vw;
+  padding: 0.5vw;
+  margin-top: 0.5vw;
   font-size: 0.6vw;
   color: #856404;
   font-family: "Consolas", monospace;
@@ -1527,6 +1530,6 @@ export default {
 }
 
 .refresh-shutdown-log .log-entry {
-  margin: 2px 0;
+  margin: 0.1vw 0;
 }
 </style>

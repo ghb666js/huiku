@@ -54,11 +54,7 @@
   </script>
   <style lang="less" scoped>
     .layers {
-      display: flex;              
-      // flex-direction: row;
-      // align-items: center;         
-      // gap: 8px;                    
-      // white-space: nowrap;         
+      display: flex;                   
       position: fixed;
       top: 50%;
       left: 80%;

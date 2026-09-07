@@ -90,17 +90,6 @@
     methods: {
       toggleDrawer() {
         this.drawerOpen = !this.drawerOpen;
-        
-        // this.$nextTick(() => {
-        // const el = document.querySelector('.control');
-        // // console.log(el);
-        // if (!el) return console.warn('.control 未找到');
-        // // 设置单个属性，避免覆盖其它内联样式
-        // el.style.background = 'linear-gradient(90deg, rgba(10,12,20,0), rgba(20,22,30,0))';
-        // el.style.transform = 'translateX(0%)';
-        // el.style.top = '10%';
-        // // el.style.height = '50%';
-        // });
       },
 
       // 轮播相关方法

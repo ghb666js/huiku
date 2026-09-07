@@ -1,279 +1,164 @@
 <template>
   <div class="serial-page">
-    <h1 style="font-size: 24px;">串口连接</h1>
-    <div class="button-container">
+     <!-- 第一个容器：标题 -->
+    <div class="container-title">
+      <h1>即时数据采集与显示</h1>
+    </div>
+
+    <!-- 第二个容器：四个半圆形仪表盘 -->
+    <div class="container-gauges">
+      <!-- 应力计仪表盘 -->
+      <div class="gauge-item">
+        <div class="gauge-container">
+          <svg viewBox="0 0 220 130" class="gauge-svg">
+            <defs>
+              <linearGradient id="gaugeGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#00c6ff;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#0072ff;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 10 110 A 100 100 0 0 1 210 110" fill="none" stroke="#1a3a5c" stroke-width="21" stroke-linecap="round"/>
+            <path :d="gaugeArc(100, progressData.stress)" fill="none" stroke="url(#gaugeGradient1)" stroke-width="21" stroke-linecap="round" class="gauge-progress"/>
+            <text x="110" y="100" text-anchor="middle" class="gauge-value">{{ progressData.stress }}%</text>
+          </svg>
+        </div>
+        <div class="gauge-label">
+          <span class="gauge-name">应力计</span>
+          <span class="gauge-count">({{ sensorCounts.stress }}套)</span>
+        </div>
+      </div>
+
+      <!-- 倾角计仪表盘 -->
+      <div class="gauge-item">
+        <div class="gauge-container">
+          <svg viewBox="0 0 220 130" class="gauge-svg">
+            <defs>
+              <linearGradient id="gaugeGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 10 110 A 100 100 0 0 1 210 110" fill="none" stroke="#1a3a5c" stroke-width="21" stroke-linecap="round"/>
+            <path :d="gaugeArc(100, progressData.inclinometer)" fill="none" stroke="url(#gaugeGradient2)" stroke-width="21" stroke-linecap="round" class="gauge-progress"/>
+
+            <text x="110" y="100" text-anchor="middle" class="gauge-value">{{ progressData.inclinometer }}%</text>
+          </svg>
+        </div>
+        <div class="gauge-label">
+          <span class="gauge-name">倾角计</span>
+          <span class="gauge-count">({{ sensorCounts.inclinometer }}台)</span>
+        </div>
+      </div>
+
+      <!-- 沉降仪仪表盘 -->
+      <div class="gauge-item">
+        <div class="gauge-container">
+          <svg viewBox="0 0 220 130" class="gauge-svg">
+            <defs>
+              <linearGradient id="gaugeGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#43e97b;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#38f9d7;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 10 110 A 100 100 0 0 1 210 110" fill="none" stroke="#1a3a5c" stroke-width="21" stroke-linecap="round"/>
+            <path :d="gaugeArc(100, progressData.settlement)" fill="none" stroke="url(#gaugeGradient3)" stroke-width="21" stroke-linecap="round" class="gauge-progress"/>
+
+            <text x="110" y="100" text-anchor="middle" class="gauge-value">{{ progressData.settlement }}%</text>
+          </svg>
+        </div>
+        <div class="gauge-label">
+          <span class="gauge-name">沉降仪</span>
+          <span class="gauge-count">({{ sensorCounts.settlement }}套)</span>
+        </div>
+      </div>
+
+      <!-- 温湿度计仪表盘 -->
+      <div class="gauge-item">
+        <div class="gauge-container">
+          <svg viewBox="0 0 220 130" class="gauge-svg">
+            <defs>
+              <linearGradient id="gaugeGradient4" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#ffecd2;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#fcb69f;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 10 110 A 100 100 0 0 1 210 110" fill="none" stroke="#1a3a5c" stroke-width="21" stroke-linecap="round"/>
+            <path :d="gaugeArc(100, progressData.humidity)" fill="none" stroke="url(#gaugeGradient4)" stroke-width="21" stroke-linecap="round" class="gauge-progress"/>
+
+            <text x="110" y="100" text-anchor="middle" class="gauge-value">{{ progressData.humidity }}%</text>
+          </svg>
+        </div>
+        <div class="gauge-label">
+          <span class="gauge-name">温湿度计</span>
+          <span class="gauge-count">({{ sensorCounts.humidity }}台)</span>
+        </div>
+      </div>
+    </div>
+   
       <div class="button-section">
-        <button class="control-btn" @click="impowerSerialPort" :disabled="impowerDisabled">授权端口</button>
-        <button class="control-btn" @click="connectMultiplePorts" :disabled="connectDisabled">连接端口</button>
-        <button class="control-btn" @click="closeAllPorts">断开所有端口</button>
+        <!-- <button class="control-btn" @click="impowerSerialPort" :disabled="impowerDisabled">授权端口</button> -->
+        <!-- <button class="control-btn" @click="connectMultiplePorts" :disabled="connectDisabled">连接端口</button> -->
+        <button class="control-btn" @click="startMain" :disabled="gainDisabled">即时获取</button>
+        <button class="control-btn" @click="tableShow(tableData)" :disabled="gainDisabled">表单显示</button>
+        <!-- <button class="control-btn" @click="creatExcel(tableData)" :disabled="gainDisabled">导出 Excel 文档</button> -->
+        <!-- <button class="control-btn" @click="closeAllPorts">断开所有端口</button> -->
+        <!-- <button class="control-btn" @click="saveToMySQL" :disabled="gainDisabled">导入 MySQL</button>  -->
       </div>
-      <div class="port-list-section">
-      <h2>端口连接列表</h2>
-      <div v-for="(p, idx) in connectedPorts" :key="idx" class="port-item">
-        <h3>端口: {{ portLabel(p.port) }}</h3>
-      </div>
-      <div v-if="connectedPorts.length === 0" class="port-item">
-        <h3>未连接任何端口</h3>
-      </div>
-    </div>
-      <h1 style="font-size: 24px;">数据采集和显示</h1>
-      <div class="button-section">
-        <button class="control-btn" @click="startMain" :disabled="gainDisabled">获取数据</button>
-        <button class="control-btn" @click="tableShow" :disabled="gainDisabled">表单显示</button>
-        <button class="control-btn" @click="creatExcel" :disabled="gainDisabled">导出 Excel 文档</button>
-        <button class="control-btn" @click="saveToMySQL" :disabled="gainDisabled">导入 MySQL</button>
-      </div>
-      <pre id="responseDisplay">{{ responseText }}</pre>
+      <!-- 进度条容器 -->
+      <!-- <div class="progress-container" v-show="showProgress"> -->
+        <!-- 进度条 -->
+        <!-- <div class="progress-bar" id="progress-bar" :style="{width: currentProgress + '%'}">{{ Math.round(currentProgress) }}%</div> -->
+      <!-- </div> -->
+      <pre id="responseDisplay" style="font-size: 1vw">{{ responseText }}</pre>
     </div>
 
-    
-
-    <!-- 进度条容器 -->
-    <div class="progress-container" v-show="showProgress">
-      <!-- 进度条 -->
-      <div class="progress-bar" id="progress-bar" :style="{width: currentProgress + '%'}">{{ Math.round(currentProgress) }}%</div>
-    </div>
-
-    
-
-  </div>
+  
 </template>
 
 <script>
-import * as XLSX from 'xlsx';
 import axios from 'axios';
-// import ResultTable from './ResultTable.vue';
-/* load 'fs' for readFile and writeFile support */
-// import * as fs from 'fs';
-// XLSX.set_fs(fs);
-
 export default {
   name: 'AutoTypeParse',
   // components: { ResultTable },
   components: {  },
   data() {
     return {
+      progressFlag:false,
       connectedPorts: [],
       responseText: '无端口连接',
       impowerDisabled: false,
       connectDisabled: false,
       gainDisabled: false,
       // showResultModal: false,
-      showProgress:false,
       flag:false,
       // resultData: [],
       currentProgress:0,
       port:null,
       tableData: [],
       statsInfo: '请输入查询条件并点击查询按钮',
+
       // 校验表数据
-      checkTable: [
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-B-R", "应变值(με)": 3672.87143, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-B-R-V", "应变值(με)": 3436.527576, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-A-R", "应变值(με)": 3223.324636, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-A-L", "应变值(με)": 7461.979125, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-B-L", "应变值(με)": 4129.864713, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-E-R", "应变值(με)": 3832.318404, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-E-L", "应变值(με)": 3580.908649, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-D-R", "应变值(με)": 3287.581129, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-D-R-V", "应变值(με)": 3577.94348, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-F-L", "应变值(με)": 3670.930777, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-G-L", "应变值(με)": 0, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-H-R-V", "应变值(με)": 3951.69548, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-H-R", "应变值(με)": 3585.937343, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-G-R", "应变值(με)": 3392.425428, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-H-L", "应变值(με)": 3560.925604, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-F-R", "应变值(με)": 3557.828053, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-F-R-V", "应变值(με)": 3179.898257, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-D-L", "应变值(με)": 3059.797931, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-C-R", "应变值(με)": 3953.482257, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC1-C-L", "应变值(με)": 3232.767207, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-B-R-V", "应变值(με)": 3274.744056, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-B-L", "应变值(με)": 3606.486917, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-A-L", "应变值(με)": 3487.574787, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-F-L", "应变值(με)": 3457.432529, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-D-R-V", "应变值(με)": 3500.018223, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-E-L", "应变值(με)": 3572.322578, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-G-L", "应变值(με)": 3676.98407, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-H-R-V", "应变值(με)": 3356.584208, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-H-L", "应变值(με)": 3700.371525, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-F-R-V", "应变值(με)": 3452.620962, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-C-L", "应变值(με)": 3176.074931, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC2-D-L", "应变值(με)": 3294.97758, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-B-R-V", "应变值(με)": 3727.526607, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-B-R", "应变值(με)": 3698.76929, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-B-L", "应变值(με)": 3406.247466, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-A-L", "应变值(με)": 3760.219313, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-D-R-V", "应变值(με)": 3489.311409, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-D-R", "应变值(με)": 3430.84467, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-E-L", "应变值(με)": 3328.642278, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-G-L", "应变值(με)": 3484.596788, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-H-R-V", "应变值(με)": 3270.527289, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-H-R", "应变值(με)": 3404.27893, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-H-L", "应变值(με)": 3306.541342, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-F-R", "应变值(με)": 3502.112277, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-F-R-V", "应变值(με)": 3247.889826, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-D-L", "应变值(με)": 3375.076445, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC3-C-L", "应变值(με)": 3522.422637, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-B-L", "应变值(με)": 3364.199009, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-A-L", "应变值(με)": 1168.183717, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-D-R-V", "应变值(με)": 3415.785803, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-F-L", "应变值(με)": 3438.343483, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-E-L", "应变值(με)": 3535.762877, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-F-R-V", "应变值(με)": 3667.141786, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-G-L", "应变值(με)": 3423.269814, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-H-R-V", "应变值(με)": 3601.867437, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-H-L", "应变值(με)": 3087.575224, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-D-L", "应变值(με)": 3592.210015, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC4-C-L", "应变值(με)": 3431.8707, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-B-R", "应变值(με)": 3702.307007, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-B-L", "应变值(με)": 3562.182854, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-A-L", "应变值(με)": 3233.601473, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-F-L", "应变值(με)": 3624.07594, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-D-R-V", "应变值(με)": 3530.819888, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-E-L", "应变值(με)": 3005.436839, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-F-R-V", "应变值(με)": 3734.269794, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-G-L", "应变值(με)": 3388.067899, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-H-R-V", "应变值(με)": 3655.228123, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-H-L", "应变值(με)": 3603.368725, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-C-L", "应变值(με)": 3516.37971, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-D-L", "应变值(με)": 3565.430961, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC5-B-R-V", "应变值(με)": 3453.054275, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-B-L", "应变值(με)": 3410.985553, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-A-L", "应变值(με)": 3466.247422, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-D-R-V", "应变值(με)": 3520.166163, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-E-L", "应变值(με)": 3679.956903, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-F-R-V", "应变值(με)": 3610.999326, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-H-R-V", "应变值(με)": 2753.833062, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-G-L", "应变值(με)": 3473.691923, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-H-L", "应变值(με)": 3882.017231, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-C-L", "应变值(με)": 3644.787532, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-D-L", "应变值(με)": 3359.577069, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC6-B-R-V", "应变值(με)": 3621.353583, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "总线式式解调仪", "安装位置": "GBC7-B-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": 0.3755, "Y向倾角(°)": -0.4175, },
-        { "解调仪类型": "总线式式解调仪", "安装位置": "GBC7-D-R", "应变值(με)": 4000, "沉降值(mm)": null, "X向倾角(°)": -1.6105, "Y向倾角(°)": 2.6592, },
-        { "解调仪类型": "总线式式解调仪", "安装位置": "GBC7-F-R", "应变值(με)": 4000, "沉降值(mm)": null, "X向倾角(°)": -2.2444, "Y向倾角(°)": 0.2922, },
-        { "解调仪类型": "总线式式解调仪", "安装位置": "GBC7-H-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": -0.517, "Y向倾角(°)": -0.2344, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-B-L", "应变值(με)": 0, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-A-L", "应变值(με)": 0, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-D-R-V", "应变值(με)": 3406.941922, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-E-L", "应变值(με)": 3357.99244, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-F-R-V", "应变值(με)": 3167.868732, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-G-L", "应变值(με)": 3364.680946, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-H-R-V", "应变值(με)": 3326.866908, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-H-L", "应变值(με)": 3791.98499, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-F-L", "应变值(με)": 3635.35855, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-D-L", "应变值(με)": 3324.332118, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-C-L", "应变值(με)": 3172.882372, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC7-B-R-V", "应变值(με)": 3383.955024, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-B-L", "应变值(με)": 0, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-A-L", "应变值(με)": 3561.434271, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-D-R-V", "应变值(με)": 3222.425472, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-E-L", "应变值(με)": 3523.488455, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-F-R-V", "应变值(με)": 3517.743465, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-H-R-V", "应变值(με)": 3665.338868, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-G-L", "应变值(με)": 3440.842865, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-H-L", "应变值(με)": 3946.179709, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-F-L", "应变值(με)": 3503.006666, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-C-L", "应变值(με)": 3220.701828, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-D-L", "应变值(με)": 3107.17116, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC8-B-R-V", "应变值(με)": 3623.383202, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-A-L", "应变值(με)": 3611.499752, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-E-L", "应变值(με)": 3148.486288, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-F-R-V", "应变值(με)": 3258.725923, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-G-L", "应变值(με)": 3296.050016, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-H-L", "应变值(με)": 3535.06603, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-F-L", "应变值(με)": 2999.392234, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-C-L", "应变值(με)": 3453.01817, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-D-L", "应变值(με)": 3391.996404, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC9-B-R-V", "应变值(με)": 4310.1076, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-B-L", "应变值(με)": 3476.009579, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-F-R-V", "应变值(με)": 3386.138772, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-H-L", "应变值(με)": 3520.044017, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-F-L", "应变值(με)": 3380.432795, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-D-L", "应变值(με)": 3450.851137, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC10-B-R-V", "应变值(με)": 3566.48707, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-B-L", "应变值(με)": 3469.888947, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-D-L", "应变值(με)": 3326.87468, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-F-R-V", "应变值(με)": 3667.732014, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-H-L", "应变值(με)": 3758.140202, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-F-L", "应变值(με)": 3369.398439, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC11-B-R-V", "应变值(με)": 3408.826087, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-B-L", "应变值(με)": 3542.56864, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-D-L", "应变值(με)": 3433.551072, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-F-R-V", "应变值(με)": 3709.330263, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-H-L", "应变值(με)": 3547.589091, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-F-L", "应变值(με)": 3385.022844, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC12-B-R-V", "应变值(με)": 3692.420303, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-B-L", "应变值(με)": 3401.80431, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-D-L", "应变值(με)": 3326.827931, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-F-R-V", "应变值(με)": 3686.562502, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-H-L", "应变值(με)": 3424.508868, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-F-L", "应变值(με)": 3654.598196, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC13-B-R-V", "应变值(με)": 3632.985042, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-B-L", "应变值(με)": 3548.88052, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-D-L", "应变值(με)": 3501.94857, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-F-R-V", "应变值(με)": 2890.510863, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-H-L", "应变值(με)": 3432.851916, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-F-L", "应变值(με)": 3486.680657, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC14-B-R-V", "应变值(με)": 3079.244186, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-B-L", "应变值(με)": 3604.796067, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-D-L", "应变值(με)": 3398.252545, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-F-R-V", "应变值(με)": 3117.179046, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-H-L", "应变值(με)": 3593.116296, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-F-L", "应变值(με)": 3448.650541, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC15-B-R-V", "应变值(με)": 4108.782486, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "总线式解调仪", "安装位置": "GBC16-B-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": 1.632857143, "Y向倾角(°)": 2.122904762, },
-        { "解调仪类型": "总线式解调仪", "安装位置": "GBC16-D-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": -2.738952381, "Y向倾角(°)": -0.273904762, },
-        { "解调仪类型": "总线式解调仪", "安装位置": "GBC16-F-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": 0.345142857, "Y向倾角(°)": 0.016714286, },
-        { "解调仪类型": "总线式解调仪", "安装位置": "GBC16-H-R", "应变值(με)": null, "沉降值(mm)": null, "X向倾角(°)": -2.57152381, "Y向倾角(°)": 0.772904762, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC16-B-L", "应变值(με)": 3939.422357, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC16-D-L", "应变值(με)": 3624.004661, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC16-H-L", "应变值(με)": 3393.63699, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "GBC16-F-L", "应变值(με)": 3472.772002, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY1", "应变值(με)": 3297.361168, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY13", "应变值(με)": 3209.665096, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY10", "应变值(με)": 3161.416557, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY16", "应变值(με)": 3002.930398, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY6", "应变值(με)": 3312.370685, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY7", "应变值(με)": 3235.871415, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY11", "应变值(με)": 3226.14185, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY9", "应变值(με)": 3252.538412, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY2", "应变值(με)": 3154.569959, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY3", "应变值(με)": 3028.120327, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZY8", "应变值(με)": 3269.1245, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS3A", "应变值(με)": 5829.036113, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS3B", "应变值(με)": 5275.727414, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS3C", "应变值(με)": 5658.84933, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS4A", "应变值(με)": 5997.874055, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS4B", "应变值(με)": 5555.087174, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS5A", "应变值(με)": 5921.80357, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS5B", "应变值(με)": 5612.183679, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS5C", "应变值(με)": 5222.788726, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS8A", "应变值(με)": 5753.805502, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS8B", "应变值(με)": 5511.717705, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS8C", "应变值(με)": 5767.485034, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS10A", "应变值(με)": 5639.335123, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS10B", "应变值(με)": 5778.732469, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS10C", "应变值(με)": 5639.335123, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS11B", "应变值(με)": 5582.979487, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS11C", "应变值(με)": 5457.403198, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS13A", "应变值(με)": 5220.156739, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS13B", "应变值(με)": 5273.96337, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS14A", "应变值(με)": 5622.168345, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS14B", "应变值(με)": 5184.703524, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS14C", "应变值(με)": 4779.450799, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS16B", "应变值(με)": 5152.761191, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS16C", "应变值(με)": 5504.301974, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS18A", "应变值(με)": 5717.067404, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS18B", "应变值(με)": 5708.689697, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS18C", "应变值(με)": 5652.828804, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS20A", "应变值(με)": 5303.801307, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS20C", "应变值(με)": 5830.953285, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS21A", "应变值(με)": 4696.240387, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS21B", "应变值(με)": 5598.563923, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-        { "解调仪类型": "振弦式解调仪", "安装位置": "ZS21C", "应变值(με)": 4916.176917, "沉降值(mm)": null, "X向倾角(°)": null, "Y向倾角(°)": null, },
-      ],
+      progressAnimationTimer: null,
+      progressData: {
+        stress: 0,        // 应力计进度
+        inclinometer: 0,  // 倾角计进度
+        settlement: 0,    // 沉降仪进度
+        humidity: 0        // 温湿度计进度
+      },
+      // 传感器数量
+      sensorCounts: {
+        stress: 196,
+        inclinometer: 8,
+        settlement: 7,
+        humidity: 4
+      },
+      // 进度条完成时间配置（秒）
+      progressDuration: {
+        stress: 240,
+        inclinometer: 100,
+        settlement: 80,
+        humidity: 60
+      }
     };
   },
   mounted() {
@@ -293,6 +178,98 @@ export default {
     this.closeAllPorts();
   },
   methods: {
+    // 计算半圆形仪表盘弧线路径
+    gaugeArc(maxValue, currentValue) {
+      const startX = 10;
+      const startY = 110;
+      const radius = 100;
+      // const progress = Math.min(Math.max(currentValue / maxValue, 0), 1);
+      // 将currentValue转换为数字并限制范围，然后计算进度
+      const numValue = Number(currentValue) || 0;
+      const safeValue = Math.min(Math.max(numValue, 0), 100);
+      const progress = safeValue / 100;
+      const angle = Math.PI * progress;
+      const endX = startX + radius * (1 - Math.cos(angle));
+      const endY = startY - radius * Math.sin(angle);
+      return `M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`;
+    },
+    // 启动进度条动画
+    startProgressAnimation() {
+      // 清除之前的动画定时器
+      if (this.progressAnimationTimer) {
+        clearInterval(this.progressAnimationTimer);
+      }
+      
+      // 每次更新的时间间隔（毫秒）
+      const intervalTime = 500;
+      
+      // 获取各自的完成时间配置（秒）
+      const stressTime = this.progressDuration.stress || 20;
+      const inclinometerTime = this.progressDuration.inclinometer || 20;
+      const settlementTime = this.progressDuration.settlement || 20;
+      const humidityTime = this.progressDuration.humidity || 20;
+      
+      // 计算每个进度条每次更新的增量百分比
+      const stressIncrement = 100 / (stressTime * 1000 / intervalTime);
+      const inclinometerIncrement = 100 / (inclinometerTime * 1000 / intervalTime);
+      const settlementIncrement = 100 / (settlementTime * 1000 / intervalTime);
+      const humidityIncrement = 100 / (humidityTime * 1000 / intervalTime);
+      
+      // 初始化进度
+      this.progressData.stress = 0;
+      this.progressData.inclinometer = 0;
+      this.progressData.settlement = 0;
+      this.progressData.humidity = 0;
+      
+      // 存储当前的精确进度值（用于计算）
+      let stressValue = 0;
+      let inclinometerValue = 0;
+      let settlementValue = 0;
+      let humidityValue = 0;
+      
+      // 设置定时器，每隔 intervalTime 毫秒更新一次进度条
+      this.progressAnimationTimer = setInterval(() => {
+        // 更新进度条数据（确保不超过100）
+        if (stressValue < 100) {
+          stressValue = Math.min(stressValue + stressIncrement, 100);
+          this.progressData.stress = Math.min(Math.round(stressValue * 100) / 100, 100);
+        }
+        if (inclinometerValue < 100) {
+          inclinometerValue = Math.min(inclinometerValue + inclinometerIncrement, 100);
+          this.progressData.inclinometer = Math.min(Math.round(inclinometerValue * 100) / 100, 100);
+        }
+        if (settlementValue < 100) {
+          settlementValue = Math.min(settlementValue + settlementIncrement, 100);
+          this.progressData.settlement = Math.min(Math.round(settlementValue * 100) / 100, 100);
+        }
+        if (humidityValue < 100) {
+          humidityValue = Math.min(humidityValue + humidityIncrement, 100);
+          this.progressData.humidity = Math.min(Math.round(humidityValue * 100) / 100, 100);
+        }
+        
+        // 当所有进度都达到 100% 时，清除定时器
+        if (stressValue >= 100 && 
+            inclinometerValue >= 100 && 
+            settlementValue >= 100 && 
+            humidityValue >= 100) {
+          clearInterval(this.progressAnimationTimer);
+          this.progressAnimationTimer = null;
+        }
+      }, intervalTime);
+    },
+    // 停止进度条动画
+    stopProgressAnimation() {
+      if (this.progressAnimationTimer) {
+        clearInterval(this.progressAnimationTimer);
+        this.progressAnimationTimer = null;
+      }
+      // 确保所有进度值不超过100
+      this.progressData.stress = Math.min(Number(this.progressData.stress) || 0, 100);
+      this.progressData.inclinometer = Math.min(Number(this.progressData.inclinometer) || 0, 100);
+      this.progressData.settlement = Math.min(Number(this.progressData.settlement) || 0, 100);
+      this.progressData.humidity = Math.min(Number(this.progressData.humidity) || 0, 100);
+    },
+
     portLabel(port) {
       try {
         const info = port.getInfo ? port.getInfo() : {};
@@ -306,34 +283,24 @@ export default {
 
       return parseInt(hexStr, 16);
     },
-    tableShow(finalArr) {
+    async tableShow(finalArr) {
       // 过滤掉 null/undefined/非对象项
-      const safeArr = Array.isArray(finalArr) ? finalArr.filter(item => item && typeof item === 'object') : [];
-      
+      // console.log(finalArr,'--------'); 
+      const safeArr = await Array.isArray(finalArr) ? finalArr.filter(item => item && typeof item === 'object') : [];
       // 更新表格数据
-      this.tableData = safeArr;
-      
+      // this.tableData = safeArr;
       // 更新统计信息
       this.statsInfo = `共 ${safeArr.length} 条数据`;
       
       // 存储数据到 localStorage
       localStorage.setItem('sensorData', JSON.stringify(safeArr));
+      // 使用完整路径打开页面
+      setTimeout(() => {
+        // window.open('/pageB.html');
+        this.$EventBus.$emit('showPageData',safeArr);
+      }, 500);
     },
-    async impowerSerialPort() {
-      try {
-        if (!('serial' in navigator)) {
-          alert('当前浏览器不支持 Web Serial API');
-          return;
-        }
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 9600, dataBits: 8, stopBits: 1, parity: 'none' });
-        this.connectedPorts.push({ port });
-        this.responseText = `已授权并打开端口: ${this.portLabel(port)}`;
-      } catch (err) {
-        console.error('授权端口出错', err);
-        this.responseText = `授权端口出错: ${err.message || err}`;
-      }
-    },
+    
 
     async connectMultiplePorts() {
       try {
@@ -351,6 +318,8 @@ export default {
           }
         }
         this.responseText = `已连接 ${this.connectedPorts.length} 个端口`;
+        this.$store.state.connectedPorts = this.connectedPorts
+        // this.startMain()
       } catch (err) {
         console.log(222);
         
@@ -930,10 +899,20 @@ export default {
         for (let key in item) {
           if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
             return true;
+            // arr.splice(index,1);
           }
         }
         return false;
       });
+      // arr.forEach((item,index) => {
+      //   for (let key in item) {
+      //     if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
+      //       return false;
+      //       // arr.splice(index,1);
+      //     }
+      //   }
+      //   return false;
+      // });
     },
 
     // 保存到MySQL数据库
@@ -944,8 +923,10 @@ export default {
           rows: data
         });
         console.log(`✅ 成功：${res.data.message}`);
+        this.responseText = `✅ 状态：成功将215条传感器实时数据存入传感器数据库`;
       } catch (e) {
         console.error('❌ 失败：' + (e.response?.data?.error || e.message));
+         this.responseText = '❌ 失败：' + (e.response?.data?.error || e.message);
       }
     },
 
@@ -977,13 +958,13 @@ export default {
         const item = historyData[i];
         if (item && item['安装位置'] === location) {
           recentFive.push(item);
-          if (recentFive.length === 5) {
+          if (recentFive.length === 10) {
             break;
           }
         }
       }
       let isDeviceAbnormal = false;
-      if (recentFive.length >= 5) {
+      if (recentFive.length >= 10) {
         isDeviceAbnormal = true;
         for (let i = 0; i < recentFive.length; i++) {
           const strain = recentFive[i]['应变值'];
@@ -1048,171 +1029,453 @@ export default {
     },
 
     // 与校验表比较（应力和倾角传感器健康状态判断）
-    async compareWithCheckTable(newData, checkTable, threshold = 20) {
-      if (!Array.isArray(newData) || !Array.isArray(checkTable)) {
-        throw new Error("输入数据必须是数组");
-      }
-      const checkMap = {};
-      checkTable.forEach(item => {
-        if (item["安装位置"] !== undefined) {
-          checkMap[item["安装位置"]] = item;
-        }
-      });
-      const createResult = (位置, 类型, 状态, 应变值, 异常) => ({
-        安装位置: 位置,
-        类型: 类型,
-        状态: 状态,
-        应变值: 应变值,
-        异常情况: 异常
-      });
-      const calcPercent = (newVal, checkVal) =>
-        (newVal - checkVal) / Math.abs(checkVal) * 100;
-      const getDeviceFailureReason = async (position) => {
-        const straintiltHistoryData = await this.getHistoryData('sensorstatus', 1020);
-        const result = await this.checkHistoryData(straintiltHistoryData, position);
-        return result;
-      };
-      const analyzeStrain = async (newItem, checkItem) => {
-        const position = newItem["安装位置"];
-        const newVal = newItem["应变值(με)"];
-        const checkVal = checkItem["应变值(με)"];
-        if (newVal === null || checkVal === null) {
-          return createResult(position, "应力计", null, null, "无有效应变数据");
-        }
-        if (checkVal === 0) {
-          return createResult(position, "应力计", null, null, "校验值为0,设备损坏");
-        }
-        if (newVal === 0) {
-          const reason = await getDeviceFailureReason(position);
-          return createResult(position, "应力计", 2, newVal, reason);
-        }
-        const change = calcPercent(newVal, checkVal);
-        const isAbnormal = change > threshold && change !== 100;
-        if (isAbnormal) {
-          return createResult(position, "应力计", 1, newVal, `应变值变化${change.toFixed(2)}%,数据异常`);
-        }
-        return createResult(position, "应力计", 0, newVal, "无");
-      };
-      const analyzeTilt = async (newItem, checkItem) => {
-        const position = newItem["安装位置"];
-        const newX = newItem["X向倾角(°)"];
-        const newY = newItem["Y向倾角(°)"];
-        const checkX = checkItem["X向倾角(°)"];
-        const checkY = checkItem["Y向倾角(°)"];
-        if (newX === null || newY === null || checkX === null || checkY === null) {
-          return createResult(position, "倾角计", null, null, "无有效倾角数据");
-        }
-        if (checkX === 0 && checkY === 0) {
-          return createResult(position, "倾角计", null, null, "校验值为0,设备损坏");
-        }
-        if (newX === 0 || newY === 0) {
-          const reason = await getDeviceFailureReason(position);
-          return createResult(position, "倾角计", 2, null, reason);
-        }
-        const xChange = checkX !== 0 ? calcPercent(newX, checkX) : 0;
-        const yChange = checkY !== 0 ? calcPercent(newY, checkY) : 0;
-        const xAbnormal = xChange > threshold;
-        const yAbnormal = yChange > threshold;
-        if (xAbnormal || yAbnormal) {
-          return createResult(position, "倾角计", 1, null,
-            `X向倾角变化${xChange.toFixed(2)}%；Y向倾角变化${yChange.toFixed(2)}%`);
-        }
-        return createResult(position, "倾角计", 0, null, "无");
-      };
-      const processAll = async () => {
-        const results = [];
-        for (const newItem of newData) {
-          const position = newItem["安装位置"];
-          const checkItem = checkMap[position];
-          if (!checkItem) {
-            continue;
-          }
-          const hasStrain = newItem["应变值(με)"] !== undefined && newItem["应变值(με)"] !== null;
-          const hasTiltX = newItem["X向倾角(°)"] !== undefined && newItem["X向倾角(°)"] !== null;
-          const hasTiltY = newItem["Y向倾角(°)"] !== undefined && newItem["Y向倾角(°)"] !== null;
-          const hasTilt = hasTiltX || hasTiltY;
-          let result = null;
-          if (hasStrain) {
-            result = await analyzeStrain(newItem, checkItem);
-          } else if (hasTilt) {
-            result = await analyzeTilt(newItem, checkItem);
-          } else {
-            continue;
-          }
-          if (result) {
-            results.push(result);
-          }
-        }
-        return results;
-      };
-      return processAll();
+   
+
+
+    async checkTable(){
+      const createResult = (解调仪类型, 安装位置, 应变值, 沉降值, X向倾角, Y向倾角) => ({
+                "解调仪类型": 解调仪类型,
+                "安装位置": 安装位置,
+                "应变值(με)": 应变值,
+                "沉降值(mm)": 沉降值,
+                "X向倾角(°)": X向倾角,
+                "Y向倾角(°)": Y向倾角
+            });
+
+            const data = await this.getHistoryData('data', 2150)
+
+            // 第一步：过滤出有应变值的数据（不为null、不为undefined、不为空字符串，并转换为数字）
+            const validData = data.filter(item => {
+                const strain = item['应变值(με)'];
+                return strain !== null && strain !== undefined && strain !== '';
+            }).map(item => ({
+                ...item,
+                '应变值(με)': Number(item['应变值(με)']) // 将字符串转换为数字
+            }));
+
+            // 第二步：按安装位置分组
+            const grouped = validData.reduce((acc, item) => {
+                const location = item['安装位置'];
+                if (!acc[location]) {
+                    acc[location] = [];
+                }
+                acc[location].push(item);
+                return acc;
+            }, {});
+
+            // 第三步：对每个位置计算平均应变值并生成结果
+            const results = [];
+
+            for (const [location, items] of Object.entries(grouped)) {
+                // 过滤掉应变值为0的数据，只保留非0值参与平均计算
+                const nonZeroItems = items.filter(item => item['应变值(με)'] !== 0);
+
+                // 如果没有非0数据，则平均值为null
+                let avgStrain = null;
+                if (nonZeroItems.length > 0) {
+                    const sum = nonZeroItems.reduce((acc, item) => acc + item['应变值(με)'], 0);
+                    avgStrain = sum / nonZeroItems.length;
+                }
+
+                // 取该位置第一个数据的解调仪类型
+                const demodulatorType = items[0]['解调仪类型'];
+
+                // 对于其他字段，如果有值则取第一个非null值，否则为null
+                const settlement = items.find(item => item['沉降值(mm)'] !== null)?.['沉降值(mm)'] || null;
+                const xAngle = items.find(item => item['X向倾角(°)'] !== null)?.['X向倾角(°)'] || null;
+                const yAngle = items.find(item => item['Y向倾角(°)'] !== null)?.['Y向倾角(°)'] || null;
+
+                // 创建结果对象
+                results.push(createResult(
+                    demodulatorType,
+                    location,
+                    avgStrain !== null ? Math.round(avgStrain * 100000) / 100000 : null, // 保留5位小数
+                    settlement,
+                    xAngle,
+                    yAngle
+                ));
+            }
+            return results;
     },
 
-    // 状态处理
-    statusProcess(sensorStatus, strainCoefficients) {
-      const tiltResults = [];
-      const strainResults = [];
-      sensorStatus.forEach(result => {
-        if (result.状态 === null) return;
-        if (result["类型"] === "倾角计") {
-          tiltResults.push(result);
-        } else if (result["类型"] === "应力计") {
-          strainResults.push(result);
-        }
-      });
-      const tiltProcessed = {
-        type: "倾角值",
-        status: tiltResults.length > 0 && tiltResults.every(item => item.状态 === 1) ? 1 : 0
-      };
-      let weightedSum = 0;
-      strainResults.forEach((result, index) => {
-        if (result["状态"] === 1) {
-          const positionMatch = result.安装位置.match(/GBC(\d+)/);
-          if (positionMatch && positionMatch[1]) {
-            const positionIndex = parseInt(positionMatch[1]) - 1;
-            if (positionIndex >= 0 && positionIndex < strainCoefficients.length) {
-              const coefficient = strainCoefficients[positionIndex];
-              weightedSum += coefficient * (result.应变值 || 0);
+    compareStrainCheckTable(newData, checkTable, threshold = 20) {
+
+            if (!Array.isArray(newData) || !Array.isArray(checkTable)) {
+                throw new Error("输入数据必须是数组");
             }
-          }
-        }
-      });
-      return {
-        tiltTotalStatus: tiltProcessed,
-        strainSum: weightedSum
-      };
+
+            // 构建校验表映射
+            const checkMap = {};
+            checkTable.forEach(item => {
+                if (item["安装位置"] !== undefined) {
+                    checkMap[item["安装位置"]] = item;
+                }
+            });
+
+            // 辅助函数：创建标准返回格式（增加传感器ID字段）
+            const createResult = (位置, 类型, 状态, ID, 应变值, 异常) => ({
+                安装位置: 位置,
+                类型: 类型,
+                状态: 状态,
+                传感器ID: ID,
+                应变值: 应变值,
+                异常情况: 异常
+            });
+
+            // 辅助函数：计算变化百分比
+            const calcPercent = (newVal, checkVal) =>
+                (newVal - checkVal) / (checkVal) * 100;
+
+            // 辅助函数：检查设备故障
+            const getDeviceFailureReason = async (position) => {
+                const strainHistoryData = await this.getHistoryData('strainStatus', 1960);
+                const result = await this.checkHistoryData(strainHistoryData, position);
+                return result;
+            };
+
+            // 辅助函数：分析应力计
+            const analyzeStrain = async (newItem, checkItem) => {
+                const position = newItem["安装位置"];
+                const sensorId = newItem["传感器ID"];
+                const newVal = newItem["应变值(με)"];
+                const checkVal = checkItem["应变值(με)"];
+
+                // 无有效应变数据
+                if (newVal === null || checkVal === null) {
+                    return createResult(position, "应力计", null, sensorId, null, "实时值与校验值为null,设备损坏");
+                }
+
+                // // 校验值为0：设备损坏
+                // if (checkVal === null) {
+                //     return createResult(position, "应力计", null, sensorId, null, "校验值为null,设备损坏");
+                // }
+
+                // 新值为0：设备故障
+                if (newVal === 0) {
+                    const reason = await getDeviceFailureReason(position);
+                    return createResult(position, "应力计", 2, sensorId, newVal, reason);
+                }
+
+                // 计算变化并判断
+                const change = calcPercent(newVal, checkVal);
+                const isAbnormal = change > threshold && change !== 100;
+
+                if (isAbnormal) {
+                    return createResult(position, "应力计", 1, sensorId, newVal, `应变值变化${change.toFixed(2)}%,数据异常`);
+                }
+
+                // 正常情况
+                return createResult(position, "应力计", 0, sensorId, newVal, "无");
+            };
+
+            // 主处理逻辑
+            const processAll = async () => {
+                const results = [];
+
+                for (const newItem of newData) {
+                    const position = newItem["安装位置"];
+                    const checkItem = checkMap[position];
+
+                    // 校验表中无此位置数据，跳过
+                    if (!checkItem) {
+                        continue;
+                    }
+
+                    // 判断是否为应力计（有应变值字段）
+                    const hasStrain = newItem["应变值(με)"] !== undefined && newItem["应变值(με)"] !== null;
+
+                    // 非应力计数据，跳过
+                    if (!hasStrain) {
+                        continue;
+                    }
+
+                    // 分析应力计数据
+                    const result = await analyzeStrain(newItem, checkItem);
+
+                    // 只添加有效结果
+                    if (result) {
+                        results.push(result);
+                    }
+                }
+
+                return results;
+            };
+
+            // 返回Promise
+            return processAll();
     },
+
+    async calculateStrainAverage() {
+
+            const createResult = (解调仪类型, 安装位置, 应变值, 沉降值, X向倾角, Y向倾角) => ({
+                "解调仪类型": 解调仪类型,
+                "安装位置": 安装位置,
+                "应变值(με)": 应变值,
+                "沉降值(mm)": 沉降值,
+                "X向倾角(°)": X向倾角,
+                "Y向倾角(°)": Y向倾角
+            });
+
+            const data = await this.getHistoryData('data', 2150)
+
+            // 第一步：过滤出有应变值的数据（不为null、不为undefined、不为空字符串，并转换为数字）
+            const validData = data.filter(item => {
+                const strain = item['应变值(με)'];
+                return strain !== null && strain !== undefined && strain !== '';
+            }).map(item => ({
+                ...item,
+                '应变值(με)': Number(item['应变值(με)']) // 将字符串转换为数字
+            }));
+
+            // 第二步：按安装位置分组
+            const grouped = validData.reduce((acc, item) => {
+                const location = item['安装位置'];
+                if (!acc[location]) {
+                    acc[location] = [];
+                }
+                acc[location].push(item);
+                return acc;
+            }, {});
+
+            // 第三步：对每个位置计算平均应变值并生成结果
+            const results = [];
+
+            for (const [location, items] of Object.entries(grouped)) {
+                // 过滤掉应变值为0的数据，只保留非0值参与平均计算
+                const nonZeroItems = items.filter(item => item['应变值(με)'] !== 0);
+
+                // 如果没有非0数据，则平均值为null
+                let avgStrain = null;
+                if (nonZeroItems.length > 0) {
+                    const sum = nonZeroItems.reduce((acc, item) => acc + item['应变值(με)'], 0);
+                    avgStrain = sum / nonZeroItems.length;
+                }
+
+                // 取该位置第一个数据的解调仪类型
+                const demodulatorType = items[0]['解调仪类型'];
+
+                // 对于其他字段，如果有值则取第一个非null值，否则为null
+                const settlement = items.find(item => item['沉降值(mm)'] !== null)?.['沉降值(mm)'] || null;
+                const xAngle = items.find(item => item['X向倾角(°)'] !== null)?.['X向倾角(°)'] || null;
+                const yAngle = items.find(item => item['Y向倾角(°)'] !== null)?.['Y向倾角(°)'] || null;
+
+                // 创建结果对象
+                results.push(createResult(
+                    demodulatorType,
+                    location,
+                    avgStrain !== null ? Math.round(avgStrain * 100000) / 100000 : null, // 保留5位小数
+                    settlement,
+                    xAngle,
+                    yAngle
+                ));
+            }
+            return results;
+    },
+
+    strainStatusProcess(strainStatus, strainCoefficients) {
+            // 存储数据
+            const strainResults = [];
+
+            // 遍历结果，分类存储（仅存储状态不为null的数据）
+            strainStatus.forEach(result => {
+                if (result.状态 === null) return; // 跳过状态为null的数据
+
+                else if (result["类型"] === "应力计") {
+                    strainResults.push(result);
+                }
+            });
+
+            // 计算应变值的加权求和
+            let weightedSum = 0;
+            strainResults.forEach((result, index) => {
+                if (result["状态"] === 1) {
+                    // 提取安装位置编号（如GBC1 → 1）
+                    const positionMatch = result.安装位置.match(/GBC(\d+)/);
+                    if (positionMatch && positionMatch[1]) {
+                        const positionIndex = parseInt(positionMatch[1]) - 1; // 转换为0-based索引
+                        // 确保索引在系数数组范围内
+                        if (positionIndex >= 0 && positionIndex < strainCoefficients.length) {
+                            const coefficient = strainCoefficients[positionIndex];
+                            weightedSum += coefficient * (result.应变值 || 0);
+                        }
+                    }
+                }
+
+            });
+
+            // 返回处理后的结果
+            return weightedSum;
+        },
+
+    async calculateTiltAverage() {
+
+            const sensorData = await this.getHistoryData('data', 2160)
+
+            // 辅助函数：创建返回格式
+            const createResult = (安装位置, X向倾角, Y向倾角) => ({
+                "安装位置": 安装位置,
+                "X向倾角(°)": X向倾角,
+                "Y向倾角(°)": Y向倾角
+            });
+
+            // 按安装位置分组，收集有倾角值的数据
+            const grouped = {};
+
+            sensorData.forEach(item => {
+                const xTilt = item["X向倾角(°)"];
+                const yTilt = item["Y向倾角(°)"];
+
+                // 只处理有倾角值的元素（X或Y不为null、不为undefined、不为空字符串）
+                const hasXTilt = xTilt !== null && xTilt !== undefined && xTilt !== '';
+                const hasYTilt = yTilt !== null && yTilt !== undefined && yTilt !== '';
+
+                if (!hasXTilt && !hasYTilt) {
+                    return; // 跳过无倾角值的元素
+                }
+
+                const position = item["安装位置"];
+
+                if (!grouped[position]) {
+                    grouped[position] = {
+                        xValues: [],
+                        yValues: []
+                    };
+                }
+
+                // 将字符串转换为数字后存入
+                if (hasXTilt) {
+                    grouped[position].xValues.push(Number(xTilt));
+                }
+                if (hasYTilt) {
+                    grouped[position].yValues.push(Number(yTilt));
+                }
+            });
+
+            // 计算平均值并生成结果
+            const results = [];
+
+            for (const [position, data] of Object.entries(grouped)) {
+                const xAvg = data.xValues.length > 0
+                    ? data.xValues.reduce((sum, val) => Math.abs(sum) + Math.abs(val), 0) / data.xValues.length
+                    : null;
+
+                const yAvg = data.yValues.length > 0
+                    ? data.yValues.reduce((sum, val) => Math.abs(sum) + Math.abs(val), 0) / data.yValues.length
+                    : null;
+
+                results.push(createResult(position, xAvg, yAvg));
+            }
+            console.log(results)
+            return results;
+        },
+    async compareTiltCheckTable(data1, data2, threshold) {
+
+            const checkMap = {};
+            data2.forEach(item => {
+                checkMap[item['安装位置']] = item;
+            });
+
+            const results = [];
+
+            data1.forEach(item => {
+                const position = item['安装位置'];
+                const checkItem = checkMap[position];
+
+                // 如果data2中没有对应位置的数据，跳过
+                if (!checkItem) {
+                    return;
+                }
+
+                const xTilt = item['X向倾角(°)'];
+                const yTilt = item['Y向倾角(°)'];
+                const temperature = item['温度(°C)'];
+                const sensorId = item['传感器ID'];
+
+                // 检查是否有有效的倾角值和温度值
+                const hasXTilt = xTilt !== null && xTilt !== undefined;
+                const hasYTilt = yTilt !== null && yTilt !== undefined;
+                const hasTemp = temperature !== null && temperature !== undefined && temperature !== 0;
+
+                // 如果没有有效数据，跳过
+                if ((!hasXTilt && !hasYTilt) || !hasTemp) {
+                    return;
+                }
+
+                const checkXTilt = checkItem['X向倾角(°)'];
+                const checkYTilt = checkItem['Y向倾角(°)'];
+
+                let xResult = null;
+                let yResult = null;
+                let status = 0;
+                const abnormalDetails = [];
+
+                // 计算X向倾角差值除以温度的绝对值
+                if (hasXTilt && checkXTilt !== null && checkXTilt !== undefined) {
+                    const xDiff = Math.abs((Math.abs(xTilt) - checkXTilt) / temperature);
+                    xResult = xTilt;
+                    if (xDiff >= threshold) {
+                        status = 1;
+                        abnormalDetails.push(`X向倾角异常:差值比例为${xDiff.toFixed(6)}`);
+                    }
+                }
+
+                // 计算Y向倾角差值除以温度的绝对值
+                if (hasYTilt && checkYTilt !== null && checkYTilt !== undefined) {
+                    const yDiff = Math.abs((Math.abs(yTilt) - checkYTilt) / temperature);
+                    yResult = yTilt;
+                    if (yDiff >= threshold) {
+                        status = 1;
+                        abnormalDetails.push(`Y向倾角异常:差值比例为${yDiff.toFixed(6)}`);
+                    }
+                }
+
+                // 构建异常情况描述
+                let abnormal = "无";
+                if (abnormalDetails.length > 0) {
+                    abnormal = abnormalDetails.join('；');
+                }
+
+                // 添加结果
+                results.push({
+                    '安装位置': position,
+                    '类型': '倾角计',
+                    '状态': status,
+                    '传感器ID': sensorId || null,
+                    'X向倾角(°)': xResult,
+                    'Y向倾角(°)': yResult,
+                    '异常情况': abnormal
+                });
+            });
+
+            // console.log(results)
+            return results;
+        },
 
     // 健康评估
-    healthEva(totalStatus, settlementTotalStatus) {
-      if (totalStatus.tiltTotalStatus.status || settlementTotalStatus) {
-        console.log(totalStatus.tiltTotalStatus.status);
-        console.log(settlementTotalStatus);
-        return 'R';
-      } else {
-        console.log(totalStatus.strainSum);
-        if (totalStatus.strainSum >= 0 && totalStatus.strainSum < 1040.376764200341) {
-          return 'G';
-        } else if (totalStatus.strainSum >= 1040.376764200341 && totalStatus.strainSum < 3121.1302926010226) {
-          return 'Y';
-        } else if (totalStatus.strainSum >= 3121.1302926010226 && totalStatus.strainSum < 7282.6373494023865) {
-          return "O";
-        } else {
-          return "R";
-        }
-      }
-    },
+    healthEva(totalStatus, settlementTotalStatus, strainSum) {
 
-    creatExcel(result) {
-      if (!window.XLSX) {
-        alert('请在页面中引入 xlsx 库');
-        return;
-      }
-      const worksheet = XLSX.utils.json_to_sheet(result);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "database");
-      XLSX.writeFile(workbook, "database.xlsx");
-    },
+            if (totalStatus || settlementTotalStatus) {
+
+                console.log(totalStatus)
+                console.log(settlementTotalStatus)
+                return 'R'
+            }
+            else {
+                if (strainSum >= 0 && strainSum < 1040.376764200341) {
+                    return 'G'
+                }
+                else if (strainSum >= 1040.376764200341 && strainSum < 3121.1302926010226) {
+                    return 'Y'
+                }
+                else if (strainSum >= 3121.1302926010226 && strainSum < 7282.6373494023865) {
+                    return "O"
+                }
+                else {
+                    return "R"
+                }
+            }
+        },
+
 
     async sendForceCommand(forceCommand, idx) {
       const port = this.connectedPorts[idx].port;
@@ -1274,40 +1537,7 @@ export default {
     waitSeconds(seconds) {
       return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     },
-    async progress() {
-      this.flag = false
-      // 总时间（秒）
-      const totalTime = 80;
-      // 每次更新的时间间隔（毫秒）
-      const intervalTime = 100;
-      // 计算每次更新的进度百分比
-      const increment = (100 / (totalTime * 1000 / intervalTime));
-      // 当前进度
-      this.currentProgress = 0;
-
-      // 设置定时器，每隔 intervalTime 毫秒更新一次进度条
-      const interval = setInterval(async () => {
-        // this.currentProgress = Math.round(this.currentProgress);
-        // 增加当前进度
-        this.currentProgress += increment;
-        // 更新进度条的宽度
-        // this.progressBar.style.width = `${currentProgress}%`;
-        // 更新进度条内的文本
-        
-
-        // 当进度达到 100% 时，清除定时器
-        if (this.currentProgress >= 100) {
-          clearInterval(interval);
-          this.currentProgress = Math.round(this.currentProgress);
-          await this.waitSeconds(0.1)
-          // progressContainer.style.display = 'none'
-          // progressBar.style.display = 'none'
-          this.showProgress = false;
-          this.flag = true
-        }
-      }, intervalTime);
-
-    },
+    
     async main() {
       try {
         const forceCommands = [
@@ -1365,7 +1595,9 @@ export default {
             }
           }
         }
+        this.flag = true;
         // return objArr;
+        // EventBus.$emit('portsData',this.connectedPorts)
         return [objArr, this.flag]
       } catch (error) {
         console.error('main 出错', error);
@@ -1374,40 +1606,68 @@ export default {
       }
     },
 
+   calculateTileStatus(results) {
+        // 如果没有数据，返回正常状态0
+        if (!results || results.length === 0) {
+            return 0;
+        }
+        // 对所有状态进行与运算：所有状态都为0时总状态为0，否则为1
+        return results.some(item => item['状态'] === 1) ? 1 : 0;
+    },
+
     async startMain() {
-      if (!this.connectedPorts[0]) {
+      // if (!this.connectedPorts[0]) {
+      if (!this.$store.state.connectedPorts.length) {
+        this.connectMultiplePorts()
         alert('未连接端口');
         return;
       } else {
+        this.connectedPorts = this.$store.state.connectedPorts
+        this.responseText = `已连接${this.connectedPorts.length}个端口`
         this.showProgress = true;
-        this.progress();
-        if (this.connectedPorts.length === 0) {
+        // 开始获取数据时，重置所有进度条为空
+        this.progressData.stress = 0;
+        this.progressData.inclinometer = 0;
+        this.progressData.settlement = 0;
+        this.progressData.humidity = 0;
+        // 启动进度条动画
+        this.startProgressAnimation();
+        if (this.$store.state.connectedPorts.length === 0) {
           alert('没有已连接的端口');
           return;
         }
         this.gainDisabled = true;
         try {
           const [finalArr, flag] = await this.main();
-          
+          // console.log(flag,'-------------');
+          this.tableData = finalArr;
           // 清除数组中的空元素
           const sensorData = this.removeEmptyObjects(finalArr);
-          
+
           // 返回应力计和倾角计传感器状态
-          const straintiltStatus = await this.compareWithCheckTable(sensorData, this.checkTable, 20);
-          console.log('倾角计与应力计状态', straintiltStatus);
+          const strainCheckTable = await this.calculateStrainAverage();
+          const strainStatus = await this.compareStrainCheckTable(sensorData, strainCheckTable, 20);
+          console.log('倾角计与应力计状态', strainStatus);
           
+          const tiltCheckTable = await this.calculateTiltAverage();
+                // console.log('倾角校准', tiltCheckTable);
+                // 返回倾角计传感器状态
+          const tiltStatus = await this.compareTiltCheckTable(sensorData, tiltCheckTable,0.03);
+                // console.log('倾角状态', tiltStatus);
           // 处理沉降值传感器
           // 将每个沉降值减去基准沉降值
-          const settlementProcessedData = this.processSettlementData(sensorData);
+          //将每个沉降值减去基准沉降值
+          const settlementProcessedData = await this.processSettlementData(sensorData)
           // 获取处理后的基准沉降值的每个沉降值
-          const settlementHistoryData = await this.getHistoryData('settlementHistoryData', 7);
-          console.log('沉降值历史数据', settlementHistoryData);
-          // 将实时处理后的沉降值与上次处理后的沉降值对比
+          const settlementHistoryData = await this.getHistoryData('settlementHistoryData', 7)
+          // console.log('沉降值历史数据', settlementHistoryData)
+                // 将实时处理后的沉降值与上次处理后的沉降值对比
           const settlementObject = await this.checkSettlementChange(settlementProcessedData, settlementHistoryData, 50);
-          
-          const settlementTotalStatus = settlementObject.totalStatus; // 沉降仪的总状态
-          const settlementStatusArray = settlementObject.settlementStatusArr; // 各个沉降仪的状态
-          console.log('沉降仪各个状态数组', settlementStatusArray);
+          // console.log(settlementObject)
+
+          const settlementTotalStatus = settlementObject.totalStatus // 沉降仪的总状态
+          const settlementStatusArray = settlementObject.settlementStatusArr // 各个沉降仪的状态
+          console.log('沉降仪各个状态数组', settlementStatusArray)
           
           // 形变系数
           const strainCoefficients = [
@@ -1417,47 +1677,73 @@ export default {
             1000 * 0.00865169520312063, 1000 * 0.00673794699908547, 1000 * 0.00524751839918138, 1000 * 0.00408677143846407
           ];
           
+
+
           // 对倾角和应力传感器进行处理
           // 返回倾角计，应力计总状态以及异常应力计的应变值总和
-          const totalStatus = this.statusProcess(straintiltStatus, strainCoefficients);
-          console.log(totalStatus);
-          
-          // 对整个系统进行健康评估
-          const totalHealthStatus = this.healthEva(totalStatus, settlementTotalStatus);
-          console.log('系统健康状态:', totalHealthStatus);
+          const strainSum = await this.strainStatusProcess(strainStatus, strainCoefficients);
+                console.log('应变值之和', strainSum)
+                const tiltTotalStatus = this.calculateTileStatus(tiltStatus);
+                console.log('倾角总状态', tiltTotalStatus);  // 输出: 0 或 1
+                // 对整个系统进行健康评估
+                const totalHealthStatus = await this.healthEva(tiltTotalStatus, settlementTotalStatus, strainSum)
+                console.log(totalHealthStatus)
           // 返回 'G' 'Y' 'O' 'R'
           
           // 保存数据到数据库
           // 导入所有传感器最原始数据
-          await this.saveToMySQL('data', sensorData);
+          // 导入所有传感器最原始数据
+          await this.saveToMySQL('data', sensorData)
+          console.log(sensorData);
           
           // 延迟1000ms再导入状态数据（避免事务冲突）
+          // 导入应力计状态数据
           setTimeout(async () => {
-            // 导入应力倾角传感器状态数据
-            await this.saveToMySQL('status', straintiltStatus);
+            console.log(strainStatus);
+            
+              await this.saveToMySQL('strainStatus', strainStatus);
           }, 1000);
-          
-          // 延迟1000ms再导入状态数据（避免事务冲突）
+
+          // 导入倾角计状态数据
           setTimeout(async () => {
-            // 导入减去基准沉降值的沉降仪数据
-            await this.saveToMySQL('settlementHistoryData', settlementProcessedData);
+            console.log(tiltStatus);
+            
+              await this.saveToMySQL('tiltStatus', tiltStatus)
           }, 1000);
-          
-          // 延迟1000ms再导入状态数据（避免事务冲突）
+
+          // 导入减去基准沉降值的沉降仪数据
           setTimeout(async () => {
-            // 导入沉降仪状态数据
-            await this.saveToMySQL('settlementStatus', settlementStatusArray);
+            console.log(settlementProcessedData);
+
+              await this.saveToMySQL('settlementHistoryData', settlementProcessedData)
           }, 1000);
+
+          //  导入沉降仪状态数据
+          setTimeout(async () => {
+            console.log(settlementStatusArray);
+
+              await this.saveToMySQL('settlementStatus', settlementStatusArray);
+          }, 1000);
+
+          // --------------------------------------------------------------------------------------------
           
           // 过滤掉 null/undefined/非对象项，避免后续渲染出错
           const safeArr = Array.isArray(finalArr) ? finalArr.filter(item => item && typeof item === 'object') : [];
           
-          this.responseText = JSON.stringify(safeArr, null, 2);
+          // this.responseText = JSON.stringify(safeArr, null, 2);
+          this.responseText = '采集已完成';
+
           
           if (flag) {
             await this.tableShow(finalArr);
+            this.progressFlag = true;
           }
         } finally {
+          this.progressData.stress = 100;
+          this.progressData.inclinometer = 100;
+          this.progressData.settlement = 100;
+          this.progressData.humidity = 100;
+          this.stopProgressAnimation()
           this.gainDisabled = false;
         }
       }
@@ -1492,7 +1778,7 @@ export default {
 
 
 
-<style scoped>
+<style lang="less" scoped>
 .serial-page {
   width: 100%;
   height: 100%;
@@ -1514,41 +1800,45 @@ h1 {
   font-weight: bold;
   color: #ffffff;
   margin: 0 0 1vw 0;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 .button-container {
   display: flex;
   flex-direction: column;
+  // align-items: center;
+  // justify-content: center;
   gap: 0.75vw;
   margin-bottom: 1vw;
 }
 
 .button-section {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.75vw;
 }
 
 .control-btn {
   padding: 0.5vw 1vw;
-  font-size: 0.7vw;
+  font-size: 1vw;
   color: #ffffff;
   background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
-  border: 1px solid #0088ff;
-  border-radius: 6px;
+  border: 0.05vw solid #0088ff;
+  border-radius: 0.3vw;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
+  // position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0.05vw 0.05vw rgba(0, 0, 0, 0.3);
 }
 
 .control-btn:hover {
   background: linear-gradient(180deg, #0088ff 0%, #0066cc 100%);
   border-color: #00aaff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 136, 255, 0.4);
-  transform: translateY(-2px);
+  box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.3), 0 0 0.75vw rgba(0, 136, 255, 0.4);
+  transform: translateY(-0.1vw);
 }
 
 .control-btn:disabled {
@@ -1561,8 +1851,8 @@ h1 {
 .port-item {
   margin: 0.5vw 0;
   padding: 0.5vw;
-  border: 1px solid rgba(0, 140, 255, 0.6);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.6);
+  border-radius: 0.3vw;
   background-color: rgba(0, 30, 60, 0.8);
   color: #ffffff;
 }
@@ -1581,9 +1871,9 @@ pre {
   color: #ffffff;
   overflow: auto;
   white-space: pre-wrap;
-  border: 1px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 /* 进度条容器样式 */
@@ -1591,12 +1881,12 @@ pre {
   width: 32vw;
   height: 4vh;
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
   overflow: hidden;
   margin-top: 1vh;
   margin-bottom: 1vh;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 /* 进度条样式 */
@@ -1608,23 +1898,23 @@ pre {
   line-height: 4vh;
   color: #ffffff;
   transition: width 0.3s ease;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.05vw 0.05vw rgba(0, 0, 0, 0.3);
 }
 
 /* 数据表格区域 */
 .table-section {
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
   overflow-x: auto;
   margin: 1vw 0;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 .stats-info {
   padding: 0.8vw;
   background-color: rgba(0, 60, 120, 0.8);
-  border-bottom: 1px solid rgba(0, 140, 255, 0.4);
+  border-bottom: 0.05vw solid rgba(0, 140, 255, 0.4);
   font-size: 0.8vw;
   color: #ffffff;
 }
@@ -1638,16 +1928,16 @@ pre {
 
 .data-table th {
   background: linear-gradient(to bottom, rgba(0, 80, 160, 0.8) 0%, rgba(0, 60, 120, 0.8) 100%);
-  border: 1px solid rgba(0, 140, 255, 0.4);
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
   padding: 0.6vw 1vw;
   text-align: center;
   font-weight: normal;
   color: #ffffff;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.05vw 0.05vw rgba(0, 0, 0, 0.3);
 }
 
 .data-table td {
-  border: 1px solid rgba(0, 140, 255, 0.4);
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
   padding: 0.5vw 1vw;
   text-align: center;
   color: #ffffff;
@@ -1663,68 +1953,68 @@ pre {
 
 /* 列宽控制 */
 .col-time {
-  min-width: 140px;
+  min-width: 7vw;
 }
 
 .col-addr {
-  min-width: 110px;
+  min-width: 5.5vw;
 }
 
 .col-type {
-  min-width: 100px;
+  min-width: 5vw;
 }
 
 .col-id {
-  min-width: 80px;
+  min-width: 4vw;
 }
 
 .col-pos {
-  min-width: 120px;
+  min-width: 6vw;
 }
 
 .col-channel {
-  min-width: 60px;
+  min-width: 3vw;
 }
 
 .col-sensor {
-  min-width: 90px;
+  min-width: 4.5vw;
 }
 
 .col-temp {
-  min-width: 70px;
+  min-width: 3.5vw;
 }
 
 .col-humidity {
-  min-width: 60px;
+  min-width: 3vw;
 }
 
 .col-freq {
-  min-width: 80px;
+  min-width: 4vw;
 }
 
 .col-strain {
-  min-width: 90px;
+  min-width: 4.5vw;
 }
 
 .col-settle {
-  min-width: 90px;
+  min-width: 4.5vw;
 }
 
 .col-tiltx {
-  min-width: 90px;
+  min-width: 4.5vw;
 }
 
 .col-tilty {
-  min-width: 90px;
+  min-width: 4.5vw;
 }
 
 .port-list-section {
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
   padding: 1vw;
   margin-bottom: 1vw;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 /* 时间选择表格 */
@@ -1733,18 +2023,18 @@ table {
   width: 96%;
   margin: 1vw 0;
   background-color: rgba(0, 40, 80, 0.7);
-  border: 1px solid rgba(0, 140, 255, 0.4);
-  border-radius: 6px;
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
+  border-radius: 0.3vw;
   overflow: hidden;
-  box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.2);
+  box-shadow: inset 0 0 0.5vw rgba(0, 212, 255, 0.2);
 }
 
 table, th, td {
-  border: 1px solid rgba(0, 140, 255, 0.4);
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
 }
 
 th, td {
-  border: 1px solid rgba(0, 140, 255, 0.4);
+  border: 0.05vw solid rgba(0, 140, 255, 0.4);
   padding: 0.5vw;
   text-align: left;
   color: #ffffff;
@@ -1759,11 +2049,116 @@ h2 {
   margin-bottom: 0.5vw;
   font-size: 1vw;
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  text-shadow: 0 0 0.5vw rgba(0, 212, 255, 0.8);
 }
 
 input[type="checkbox"] {
   margin-right: 0.4vw;
   transform: scale(1.2);
+}
+
+/* 三个大容器布局 */
+.serial-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1vw;
+  box-sizing: border-box;
+}
+
+/* 第一个容器：标题 */
+.container-title {
+  text-align: center;
+  padding: 1vw 0;
+  flex-shrink: 0;
+
+  h1 {
+    font-size: 1.4vw;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+    margin: 0;
+  }
+}
+
+/* 第二个容器：四个半圆形仪表盘 */
+.container-gauges {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.2vw;
+  flex: 1;
+  gap: 0.2vw;
+}
+
+.gauge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 150px;
+}
+
+.gauge-container {
+  width: 16vw;
+  height: 12vw;
+  max-width: 220px;
+  max-height: 160px;
+  min-width: 160px;
+  min-height: 120px;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gauge-progress {
+  transition: all 0.5s ease-in-out;
+}
+
+.gauge-value {
+  font-size: 1.2vw;
+  font-weight: bold;
+  fill: rgba(255, 255, 255, 0.9);
+}
+
+.gauge-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5vw;
+}
+
+.gauge-name {
+  font-size: 1.2vw;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+}
+
+.gauge-count {
+  font-size: 1vw;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+// /* 第三个容器：按钮 */
+// .container-buttons {
+//   padding: 1vw;
+//   flex-shrink: 0;
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   gap: 1vw;
+// }
+
+#responseDisplay {
+//   max-height: 8vh;
+//   overflow-y: auto;
+//   font-size: 1vw;
+//   color: rgba(255, 255, 255, 0.8);
+//   background: rgba(0, 20, 40, 0.6);
+//   padding: 0.5vw;
+//   border-radius: 4px;
+//   width: 100%;
+//   text-align: left;
 }
 </style>

@@ -9,6 +9,7 @@ module.exports = defineConfig({
   devServer: {
     hot: false,
     liveReload: false,
+    historyApiFallback: true,
   },
   configureWebpack: (config) => {
     if (process.env.NODE_ENV === 'production') {

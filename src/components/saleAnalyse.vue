@@ -15,10 +15,12 @@
               <th>订单号</th>
               <th>车牌</th>
               <th>入厂时间</th>
-              <th>空车称重时间</th>
+              <!-- <th>空车称重时间</th> -->
               <th>库底装车时间</th>
-              <th>满车称重时间</th>
+              <!-- <th>满车称重时间</th> -->
               <th>出厂时间</th>
+              <th>地磅净重(吨)</th>
+              <th>流量计(吨)</th>
               <th>物料名称</th>
             </tr>
           </thead>
@@ -28,10 +30,12 @@
               <td>{{ row.订单号 }}</td>
               <td>{{ row.车牌 }}</td>
               <td>{{ row.入厂时间 }}</td>
-              <td>{{ row.空车称重时间 }}</td>
+              <!-- <td>{{ row.空车称重时间 }}</td> -->
               <td>{{ row.库底装车时间 }}</td>
-              <td>{{ row.满车称重时间 }}</td>
+              <!-- <td>{{ row.满车称重时间 }}</td> -->
               <td>{{ row.出厂时间 }}</td>
+              <td>{{ row['地磅净重(吨)'] }}</td>
+              <td>{{ row.流量计 }}</td>
               <td>{{ row.物料名称 }}</td>
             </tr>
           </tbody>
@@ -41,6 +45,8 @@
             共 {{ total }} 条记录，第 {{ currentPage }}/{{ totalPages }} 页
           </div>
           <div class="pagination-controls">
+            <button class="page-btn" @click="getNewData">获取最新数据</button>
+            <button class="page-btn refresh-btn" @click="refreshData">刷新</button>
             <button class="page-btn" @click="goToFirstPage" :disabled="currentPage === 1">首页</button>
             <button class="page-btn" @click="goToPrevPage" :disabled="!hasPrevPage">上一页</button>
             <button
@@ -51,11 +57,10 @@
               @click="page !== '...' && goToPage(page)"
             >
               {{ page }}
-            </button>
+            </button> 
             <button class="page-btn" @click="goToNextPage" :disabled="!hasNextPage">下一页</button>
             <button class="page-btn" @click="goToLastPage" :disabled="currentPage === totalPages">末页</button>
-            <button class="page-btn" @click="showMoreInfoDialog">更多销售信息</button>
-            <button class="page-btn refresh-btn" @click="refreshData">刷新</button>
+            <button class="page-btn" @click="showMoreInfoDialog">更多生产信息</button>
           </div>
         </div>
       </div>
@@ -73,6 +78,8 @@
 <script>
 import EventBus from '@/bus';
 import * as echarts from 'echarts';
+import { refresh, watch } from 'less';
+import { saveToMySQL } from '@/utils/generalfunction';
 export default {
     name: 'saleAnalyse',
     data() {
@@ -82,41 +89,25 @@ export default {
             name:'',
           },
           allData: [
-            {订单号: 'JD20260406012', 车牌: '赣L28787', 入厂时间: '2026-04-06 12:18:52', 空车称重时间: '2026-04-06 12:22:17', 库底装车时间: '2026-04-06 12:36:24',满车称重时间:"2026-04-06 12:52:49",出厂时间:"2026-04-06 12:55:30",物料名称:"粗灰"},
-            {订单号: 'JD20260406013', 车牌: '赣L28788', 入厂时间: '2026-04-06 13:18:52', 空车称重时间: '2026-04-06 13:22:17', 库底装车时间: '2026-04-06 13:36:24',满车称重时间:"2026-04-06 13:52:49",出厂时间:"2026-04-06 13:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406014', 车牌: '赣L28789', 入厂时间: '2026-04-06 14:18:52', 空车称重时间: '2026-04-06 14:22:17', 库底装车时间: '2026-04-06 14:36:24',满车称重时间:"2026-04-06 14:52:49",出厂时间:"2026-04-06 14:55:30",物料名称:"细灰"},
-            {订单号: 'JD20260406015', 车牌: '赣L28790', 入厂时间: '2026-04-06 15:18:52', 空车称重时间: '2026-04-06 15:22:17', 库底装车时间: '2026-04-06 15:36:24',满车称重时间:"2026-04-06 15:52:49",出厂时间:"2026-04-06 15:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406016', 车牌: '赣L28791', 入厂时间: '2026-04-06 16:18:52', 空车称重时间: '2026-04-06 16:22:17', 库底装车时间: '2026-04-06 16:36:24',满车称重时间:"2026-04-06 16:52:49",出厂时间:"2026-04-06 16:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406017', 车牌: '赣L28792', 入厂时间: '2026-04-06 17:18:52', 空车称重时间: '2026-04-06 17:22:17', 库底装车时间: '2026-04-06 17:36:24',满车称重时间:"2026-04-06 17:52:49",出厂时间:"2026-04-06 17:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406018', 车牌: '赣L28793', 入厂时间: '2026-04-06 18:18:52', 空车称重时间: '2026-04-06 18:22:17', 库底装车时间: '2026-04-06 18:36:24',满车称重时间:"2026-04-06 18:52:49",出厂时间:"2026-04-06 18:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406019', 车牌: '赣L28794', 入厂时间: '2026-04-06 19:18:52', 空车称重时间: '2026-04-06 19:22:17', 库底装车时间: '2026-04-06 19:36:24',满车称重时间:"2026-04-06 19:52:49",出厂时间:"2026-04-06 19:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406020', 车牌: '赣L28795', 入厂时间: '2026-04-06 20:18:52', 空车称重时间: '2026-04-06 20:22:17', 库底装车时间: '2026-04-06 20:36:24',满车称重时间:"2026-04-06 20:52:49",出厂时间:"2026-04-06 20:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406021', 车牌: '赣L28796', 入厂时间: '2026-04-06 21:18:52', 空车称重时间: '2026-04-06 21:22:17', 库底装车时间: '2026-04-06 21:36:24',满车称重时间:"2026-04-06 21:52:49",出厂时间:"2026-04-06 21:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406022', 车牌: '赣L28797', 入厂时间: '2026-04-06 22:18:52', 空车称重时间: '2026-04-06 22:22:17', 库底装车时间: '2026-04-06 22:36:24',满车称重时间:"2026-04-06 22:52:49",出厂时间:"2026-04-06 22:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"粉煤灰(湿)"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-06 23:18:52', 空车称重时间: '2026-04-06 23:22:17', 库底装车时间: '2026-04-06 23:36:24',满车称重时间:"2026-04-06 23:52:49",出厂时间:"2026-04-06 23:55:30",物料名称:"原灰"},
 
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"粉煤灰(湿)"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406023', 车牌: '赣L28798', 入厂时间: '2026-04-05 23:18:52', 空车称重时间: '2026-04-05 23:22:17', 库底装车时间: '2026-04-05 23:36:24',满车称重时间:"2026-04-05 23:52:49",出厂时间:"2026-04-05 23:55:30",物料名称:"原灰"},
             {订单号: 'JD20260406012', 车牌: '赣L28787', 入厂时间: '2026-03-06 12:18:52', 空车称重时间: '2026-03-06 12:22:17', 库底装车时间: '2026-03-06 12:36:24',满车称重时间:"2026-03-06 12:52:49",出厂时间:"2026-03-06 12:55:30",物料名称:"粗灰"},
-            {订单号: 'JD20260406013', 车牌: '赣L28788', 入厂时间: '2026-03-06 13:18:52', 空车称重时间: '2026-03-06 13:22:17', 库底装车时间: '2026-03-06 13:36:24',满车称重时间:"2026-03-06 13:52:49",出厂时间:"2026-03-06 13:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406014', 车牌: '赣L28789', 入厂时间: '2026-03-06 14:18:52', 空车称重时间: '2026-03-06 14:22:17', 库底装车时间: '2026-03-06 14:36:24',满车称重时间:"2026-03-06 14:52:49",出厂时间:"2026-03-06 14:55:30",物料名称:"细灰"},
-            {订单号: 'JD20260406015', 车牌: '赣L28790', 入厂时间: '2026-03-06 15:18:52', 空车称重时间: '2026-03-06 15:22:17', 库底装车时间: '2026-03-06 15:36:24',满车称重时间:"2026-03-06 15:52:49",出厂时间:"2026-03-06 15:55:30",物料名称:"粉煤灰(湿)"},
-            {订单号: 'JD20260406016', 车牌: '赣L28791', 入厂时间: '2026-03-06 16:18:52', 空车称重时间: '2026-03-06 16:22:17', 库底装车时间: '2026-03-06 16:36:24',满车称重时间:"2026-03-06 16:52:49",出厂时间:"2026-03-06 16:55:30",物料名称:"粉煤灰(湿)"},
+            {订单号: 'JD20260406013', 车牌: '赣L28788', 入厂时间: '2026-03-06 13:18:52', 空车称重时间: '2026-03-06 13:22:17', 库底装车时间: '2026-03-06 13:36:24',满车称重时间:"2026-03-06 13:52:49",出厂时间:"2026-03-06 13:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406014', 车牌: '赣L28789', 入厂时间: '2026-03-06 14:18:52', 空车称重时间: '2026-03-06 14:22:17', 库底装车时间: '2026-03-06 14:36:24',满车称重时间:"2026-03-06 14:52:49",出厂时间:"2026-03-06 14:55:30",物料名称:"二级灰"},
+            {订单号: 'JD20260406015', 车牌: '赣L28790', 入厂时间: '2026-03-06 15:18:52', 空车称重时间: '2026-03-06 15:22:17', 库底装车时间: '2026-03-06 15:36:24',满车称重时间:"2026-03-06 15:52:49",出厂时间:"2026-03-06 15:55:30",物料名称:"原灰"},
+            {订单号: 'JD20260406016', 车牌: '赣L28791', 入厂时间: '2026-03-06 16:18:52', 空车称重时间: '2026-03-06 16:22:17', 库底装车时间: '2026-03-06 16:36:24',满车称重时间:"2026-03-06 16:52:49",出厂时间:"2026-03-06 16:55:30",物料名称:"原灰"},    
           ],
           tableData: [],
           currentPage: 1,
@@ -128,14 +119,21 @@ export default {
           maxDisplayPages: 5,
           lastMonthChart: null,
           currentMonthChart: null,
-          moreData: []
+          moreData: [],
+          watchNum:0,
         };
     },
     components: {
 
     },
     watch: {
-
+      watchNum:{
+        handler(newVal){
+          console.log('自动更新页面');
+          this.refreshData()
+        },
+        deep:true
+      }
     },
     computed: {
       displayedPages() {
@@ -177,6 +175,10 @@ export default {
     mounted() {
       EventBus.$on('saleAnalyse', this.updateSale);
       this.initData();
+      // setTimeout(() => {
+        this.fetchData()
+      // }, 100);
+      this.scheduleDailyTask()
     },
     beforeDestroy() {
       EventBus.$off('saleAnalyse', this.updateSale);
@@ -194,6 +196,195 @@ export default {
       }
     },
     methods: {
+      async getNewData(){
+        // window.open('/orderData.html')
+        const currentDate = this.getCurrentDate();
+
+            const params = new URLSearchParams({
+                time: currentDate,
+                Company_id: '837c4265-361c-4c0e-9c33-8273b8d1846d',
+                Mode: '40'
+                // Mode: '1'
+            });
+
+            try {
+                const res = await fetch('http://localhost:3000/api/order?' + params);
+                const data = await res.json();
+
+                if (data.error) {
+                    // document.getElementById('result').textContent = '错误: ' + JSON.stringify(data);
+                    console.log('错误: ' + JSON.stringify(data))
+
+                } else if (data.rawResponse) {
+                    // document.getElementById('result').textContent = data.rawResponse;
+                    // console.log(data.rawResponse)
+                    
+                    const stringData = data.rawResponse
+                    console.log('原始字符串:');
+                    // console.log(stringData);
+
+                    const changeData = this.convertToArrayFormat(stringData);
+                    console.log('转换后的数据:');
+                    // console.log(changeData);
+
+                    const orderRecordData = changeData.data.OrderRecordData
+                    console.log('提取出来的数据:');
+                    // console.log(orderRecordData)
+
+                    // 调用函数进行数据处理
+                    const processedOrderRecordData = this.extractAndAddAttributes(orderRecordData);
+                    console.log('增添属性后的对象数组');
+                    // console.log(processedOrderRecordData)
+
+                    const endOrderRecordData = this.convertMaterialName(processedOrderRecordData)
+                    console.log('转化物料名称后的数据');
+                    // console.log(endOrderRecordData)
+                    await saveToMySQL('newOrderRecordData', endOrderRecordData)
+                    this.watchNum++
+                } else {
+                    // document.getElementById('result').textContent = JSON.stringify(data, null, 2);// 执行
+                    console.log(JSON.stringify(data, null, 2))
+                    alert('已是最新数据')
+
+                }
+            } catch (err) {
+                // document.getElementById('result').textContent = '请求失败: ' + err.message;
+                console.log('请求失败: ' + err.message)
+
+            }
+      },
+      getCurrentDate() {
+          // 1. 获取当前日期
+          const now = new Date();
+          // 2. 加一天（自动处理月末）     
+          now.setDate(now.getDate() + 1);
+          // 3. 格式化日期为 YYYY-MM-DD
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+      },
+     
+      convertMaterialName(data) {
+          // 物料映射表
+          const materialMap = {
+              '180103': '二级灰',
+              '180104': '原灰',
+              '180105': '粗灰',
+          };
+
+          // 返回新数组，避免修改原数据
+          return data.map(item => ({
+              ...item,
+              物料名称: materialMap[item.物料名称] || item.物料名称 // 如果找不到映射则保留原值
+          }));
+      },
+      // 提取并添加属性的函数
+      extractAndAddAttributes(data) {
+          // 定义属性名称映射
+          const keys = [
+              '订单号',
+              '车牌',
+              '入厂时间',
+              '空车称重时间',
+              '库底装车时间',
+              '满车称重时间',
+              '出厂时间',
+              '地磅净重(吨)',
+              '物料名称',
+              '流量计'
+          ];
+
+          // 将数组转换为对象数组
+          const orderObjects = data.map(item => {
+              const obj = {};
+              keys.forEach((key, index) => {
+                  obj[key] = item[index];
+              });
+              return obj;
+          });
+          return orderObjects
+      },
+       // 将字符串数据转换为数组格式
+      convertToArrayFormat(originalData) {
+          // 如果传入的是字符串，先解析修复
+          let dataObj;
+          if (typeof originalData === 'string') {
+              dataObj = this.parseAndFixData(originalData);
+          } else {
+              dataObj = originalData;
+          }
+
+          const result = {
+              "code": dataObj.code,
+              "msg": dataObj.msg,
+              "RecordNumber": dataObj.RecordNumber,
+              "data": {
+                  "Company_id": dataObj.data.Company_id,
+                  "time": dataObj.data.time,
+                  "OrderRecordData": []
+              }
+          };
+
+          dataObj.data.OrderRecordData.forEach(order => {
+              // 注意：修复后 order 已经是数组格式了，直接使用即可
+              // 但为了兼容性，如果还是对象则用 Object.values
+              let orderArray;
+              if (Array.isArray(order)) {
+                  orderArray = order;
+              } else {
+                  orderArray = Object.values(order);
+              }
+              result.data.OrderRecordData.push(orderArray);
+          });
+
+          return result;
+      },
+      // 解析并修复数据
+      parseAndFixData(rawString) {
+          // 第一步：修复非法格式，将 {...} 转换为 [...]
+          const fixedString = this.fixInvalidJSON(rawString);
+
+          // 第二步：解析为JSON对象
+          const parsedData = JSON.parse(fixedString);
+
+          return parsedData;
+      },
+      // 修复非法JSON格式的函数（将 {a, b, c} 转换为 [a, b, c]）
+      fixInvalidJSON(jsonString) {
+          // 匹配 {"值1", "值2", ...} 这种非法格式，将其替换为 ["值1", "值2", ...]
+          // 使用正则匹配 {...} 内部不是键值对的结构
+          return jsonString.replace(/\{\s*"([^"]+)"(?:\s*,\s*"([^"]+)")*\s*\}/g, function (match) {
+              // 提取所有引号内的值
+              const values = [];
+              const valueRegex = /"([^"]*)"/g;
+              let valueMatch;
+              while ((valueMatch = valueRegex.exec(match)) !== null) {
+                  values.push(valueMatch[0]); // 保留引号
+              }
+              return '[' + values.join(', ') + ']';
+          });
+      },
+      // 每天凌晨定时获取
+      scheduleDailyTask() {
+          // 获取当前时间
+          const now = new Date();
+          // 创建次日凌晨 0 点的日期对象
+          const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+          // 计算距离次日凌晨 0 点的毫秒数
+          const timeUntilMidnight = nextMidnight - now;
+
+          // 首次定时，在次日凌晨 0 点执行任务
+          setTimeout(async () => {
+
+              console.log('任务在凌晨 0 点启动');
+              await this.getNewData();
+              console.log('任务在凌晨 0 点启动');
+
+              // 之后以 24 小时为周期循环执行任务
+              setInterval(this.getNewData, 24 * 60 * 60 * 1000);
+          }, timeUntilMidnight);
+      },
       updateSale(data){
         this.saleData.show = data.show;
         if (data.show) {
@@ -202,12 +393,34 @@ export default {
           });
         }
       },
+      refreshData(){
+        this.currentPage = 1;
+        this.fetchData();
+        this.initData();
+        this.initCharts();
+      },
+      formatDateTime(isoString){
+        if(!isoString) return '-'
+        const date = new Date(isoString)
+        return date.toLocaleString
+        ('zh-CN',{
+          year:'numeric',
+          month:'2-digit',
+          day:'2-digit',
+          hour:'2-digit',
+          minute:'2-digit'
+        }
+
+        )
+      },
       initData() {
         // 处理时间格式
         this.allData.forEach(e => {
           for(let k in e){
             if(e && k.includes('时间')){
-              if(k !== '入厂时间') e[k] = e[k].substring(11)
+              e[k] = this.formatDateTime(e[k])
+              if(k !== '入厂时间') e[k] = e[k].substring(11,19)
+              // k === '入厂时间' ? e[k] = e[k].substring(0,10) + ' ' +  e[k].substring(11,16) : e[k] = e[k].substring(11,16)
             }
           }
         });
@@ -253,18 +466,13 @@ export default {
       async fetchData() {
         try {
           const response = await fetch(
-            `http://localhost:3000/api/sales/list?page=${this.currentPage}&pageSize=${this.pageSize}`
+            `http://localhost:3000/api/query/neworderrecorddata?limit=2000`
           );
           const result = await response.json();
-          if (result.success) {
-            // 当获取到真实数据时，覆盖模拟数据
             if (result.data && result.data.length > 0) {
               this.allData = result.data;
               this.initData();
             }
-          } else {
-            console.error('获取数据失败:', result.error);
-          }
         } catch (error) {
           console.error('获取数据错误:', error);
         }
@@ -294,17 +502,7 @@ export default {
       },
       showMoreInfoDialog() {
         // 通过事件总线触发显示更多销售信息的弹窗
-        this.$EventBus.$emit('showMoreSaleInfo', this.moreData);
-      },
-      refreshData() {
-        // 重置页码
-        this.currentPage = 1;
-        // 重新初始化数据
-        this.initData();
-        // 重新初始化图表
-        this.initCharts();
-        // 尝试获取真实数据
-        this.fetchData();
+        this.$EventBus.$emit('showMoreSaleInfo', this.moreData);      
       },
       closeMoreInfoDialog() {
         // 通过事件总线触发关闭更多销售信息的弹窗
@@ -361,7 +559,7 @@ export default {
           },
           xAxis: {
             type: 'category',
-            data: ['粗灰', '细灰', '粉煤灰（湿）', '总装车数'],
+            data: ['粗灰', '原灰', '二级灰', '总装车数'],
             axisLabel: {
               color: 'rgba(255, 255, 255, 0.8)',
               fontSize: 14,
@@ -432,7 +630,7 @@ export default {
           },
           xAxis: {
             type: 'category',
-            data: ['粗灰', '细灰', '粉煤灰（湿）', '总装车数'],
+            data: ['粗灰', '原灰', '二级灰', '总装车数'],
             axisLabel: {
               color: 'rgba(255, 255, 255, 0.8)',
               fontSize: 14,
@@ -506,8 +704,8 @@ export default {
         
         const monthData = {
           '粗灰': 0,
-          '细灰': 0,
-          '粉煤灰（湿）': 0,
+          '原灰': 0,
+          '二级灰': 0,
           '总': 0
         };
         
@@ -521,17 +719,17 @@ export default {
             if (materialName === '粗灰') {
               monthData['粗灰']++;
               monthData['总']++;
-            } else if (materialName === '细灰') {
-              monthData['细灰']++;
+            } else if (materialName === '原灰') {
+              monthData['原灰']++;
               monthData['总']++;
-            } else if (materialName === '粉煤灰(湿)' || materialName === '粉煤灰（湿）') {
-              monthData['粉煤灰（湿）']++;
+            } else if (materialName === '二级灰' || materialName === '二级灰') {
+              monthData['二级灰']++;
               monthData['总']++;
             }
           }
         });
         
-        return [monthData['粗灰'], monthData['细灰'], monthData['粉煤灰（湿）'], monthData['总']];
+        return [monthData['粗灰'], monthData['原灰'], monthData['二级灰'], monthData['总']];
       }
 }
 };
@@ -645,6 +843,7 @@ export default {
   .sale-data {
     flex: 1;
     display: flex;
+    // justify-content: space-between;
     gap: 0.5vw;
     padding: 0.5vw;
 
@@ -656,7 +855,7 @@ export default {
       box-shadow: inset 0 0 15px rgba(64, 158, 255, 0.1);
       display: flex;
       flex-direction: column;
-
+      justify-content: space-between;
       &::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -678,7 +877,7 @@ export default {
     }
 
     .data-table {
-      flex: 8.5;
+      // flex: 8.5;
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
@@ -757,7 +956,7 @@ export default {
     }
 
     .pagination-wrapper {
-      flex: 1.5;
+      // flex: 1.5;
       display: flex;
       flex-direction: column;
       gap: 0.5vw;
@@ -766,7 +965,7 @@ export default {
       border-top: 1px solid rgba(64, 158, 255, 0.4);
       border-radius: 0 0 6px 6px;
       box-shadow: inset 0 0 15px rgba(64, 158, 255, 0.1);
-
+      height: 10vh;
       .pagination-info {
         font-size: 0.7vw;
         color: rgba(255, 255, 255, 0.7);

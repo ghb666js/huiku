@@ -1,6 +1,5 @@
-import { roomTexts, generateParkData } from "@/assets/mock/mock";
+
 import { floorBaseMaterial2 } from "@/three/material";
-import { Notification } from "element-ui";
 import EventBus from "@/bus";
 import { setModelDefaultMaterial } from '@/three/loaderModel';
 import * as THREE from "three";
@@ -16,11 +15,7 @@ export function loaderParkRadar(app) {
 }
 
 
-// let parkData = {}
 export function createParkRadar(app) {
-  // let notifIndex = 0;
-  // console.log(app.model);
-  // parkData = generateParkData(app);
   app.rayModel = [];
   app.model.traverse(obj => {
   if (obj.name && obj.name.indexOf("雷达") > -1 && obj.isMesh) {
@@ -45,9 +40,6 @@ export function createParkRadar(app) {
       radarCenter = new THREE.Vector3();
       obj.getWorldPosition(radarCenter);
     }
-    // if (obj.isMesh && obj.name.indexOf("雷达") === -1) {
-    //   obj.material = floorBaseMaterial2;
-    // }
   });
   let ring = null;
   // 创建雷达波形特效
@@ -93,7 +85,10 @@ const highlightMaterial = new THREE.MeshBasicMaterial({
 
 let lastHoverObj = null;
 let lastOriginalMaterial = null;
-  // ...原有射线拾取代码...
+  // 先销毁旧的射线监听，防止重复绑定导致多次 window.open
+  app.destroyRaycaster('click');
+  app.destroyRaycaster('pointermove');
+
   app.initRaycaster(
     (activeObj, app, event) => {
       if (activeObj.object && activeObj.object.name.indexOf("雷达") > -1) {
@@ -104,7 +99,7 @@ let lastOriginalMaterial = null;
     'click'
   );
   // 鼠标悬停高亮
-app.initRaycaster(
+  app.initRaycaster(
   (activeObj, app, event) => {
     // 先还原上一个高亮对象
     if (lastHoverObj && lastOriginalMaterial) {
@@ -147,9 +142,6 @@ app.initRaycaster(
 export function destroyParkRadar(app) {
   app.selectedObjects = [];
   app.outlinePass.selectedObjects = app.selectedObjects;
-  // EventBus.$emit('changeTooltip', {
-  //   show: false
-  // });
   setModelDefaultMaterial(app);
   app.destroyRaycaster('click');
   // 停止雷达波形动画

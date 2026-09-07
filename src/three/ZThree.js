@@ -1,12 +1,10 @@
 import * as THREE from "three";
-import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import TWEEN from "three/examples/jsm/libs/tween.module.js";
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { addParkWater } from "@/three/parkWater";
-import EventBus from "@/bus";
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 export default class ZThree {
   constructor(id) {
     this.id = id;
@@ -18,18 +16,21 @@ export default class ZThree {
     let height = this.el.offsetHeight;
     // 创建场景
     this.scene = new THREE.Scene();
-    // 可以在这里添加hdr环境贴图
+    // 使用 PMREMGenerator 生成预过滤环境贴图（替代直接 RGBELoader → scene.environment）
     const rgbeLoader = new RGBELoader();
     rgbeLoader.load('textures/hausdorf_clear_sky_2k.hdr', (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    this.scene.environment = texture; 
-    // this.scene.background = texture; 
-  });
-
+      const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+      pmremGenerator.compileEquirectangularShader();
+      const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+      this.scene.environment = envMap;
+      // this.scene.background = envMap;
+      texture.dispose();
+    });
+    
     // 初始化加载器
     this.textureLoader = new THREE.TextureLoader();
     // 创建相机
-    this.camera = new THREE.PerspectiveCamera(60, width / height, 1, 2000);
+    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
     this.camera1 = new THREE.OrthographicCamera(width/-2, width/2, height/2, height/-2, 0.1, 1000);
     this.camera.position.set(50, 100, 100);
     this.camera.lookAt(0, 0, 0);
@@ -39,7 +40,7 @@ export default class ZThree {
       antialias: true,
       alpha: true,
     });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 5));
     this.renderer.setSize(width, height);
     this.el.append(this.renderer.domElement);
 
@@ -75,8 +76,10 @@ export default class ZThree {
     controls.enablePan = true;
 
     // 限制缩放范围
-    controls.minDistance = 1;
+    controls.minDistance = 0.01;
     controls.maxDistance = 100;
+    // 调整缩放灵敏度
+    controls.zoomSpeed = 1.5;
     // 限制垂直旋转范围
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2;
@@ -84,34 +87,45 @@ export default class ZThree {
     // 将创建的控制对象赋值给this.controls，以便其他方法能够访问和使用这个控制对象
     this.controls = controls;
   }
+  // 程序化天空（替代天空盒）
+  initSky() {
+    this.sky = new Sky();
+    this.sky.scale.setScalar(450000);
+    this.sky.position.y = 0; // 地平面高度，与场景地面 Y=0 对齐
+    this.sky.renderOrder = -1; // 确保先渲染天空
+    this.sky.material.depthWrite = false; // 不写入深度，避免遮挡模型
+    this.scene.add(this.sky);
+
+    const uniforms = this.sky.material.uniforms;
+    uniforms['turbidity'].value = 3;       // 浑浊度（1~20，越小越晴朗）
+    uniforms['rayleigh'].value = 0.5;      // 瑞利散射（天空蓝色强度）
+    uniforms['mieCoefficient'].value = 0.005;
+    uniforms['mieDirectionalG'].value = 0.8;
+
+    const sun = new THREE.Vector3();
+    const phi = THREE.MathUtils.degToRad(90 - 25); // 太阳仰角 25°
+    const theta = THREE.MathUtils.degToRad(160);   // 太阳方位
+    sun.setFromSphericalCoords(1, phi, theta);
+    uniforms['sunPosition'].value.copy(sun);
+  }
+  // 更新天空太阳位置
+  setSunPosition(elevation, azimuth) {
+    if (!this.sky) return;
+    const sun = new THREE.Vector3();
+    const phi = THREE.MathUtils.degToRad(90 - elevation);
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    sun.setFromSphericalCoords(1, phi, theta);
+    this.sky.material.uniforms['sunPosition'].value.copy(sun);
+  }
   //灯光
   initLight() {
-    // const ambientLight = new THREE.AmbientLight(0x404040);
-    const ambientLight = new THREE.AmbientLight("#6d78b0", 0.4);
-    this.scene.add(ambientLight);
-    //平行光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    // const directionalLight = new THREE.DirectionalLight('#3e9ae0', 0.2);
-
-    directionalLight.position.set(100, 100, -100);
-    //开启投影
-    directionalLight.castShadow = true;
-    this.scene.add(directionalLight);
-
-    //投影的参数
-    directionalLight.shadow.mapSize.width = 512;
-    directionalLight.shadow.mapSize.height = 512;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.camera.top = 100;
-    directionalLight.shadow.camera.bottom = -100;
-    directionalLight.shadow.camera.left = -100;
-    directionalLight.shadow.camera.right = 100;
-    directionalLight.shadow.bias = 0.05;
-    directionalLight.shadow.normalBias = 0.05;
-    // 辅助对象
-    // const helper = new THREE.CameraHelper(directionalLight.shadow.camera)
-    // this.scene.add(helper)
+    // 半球光：天空色 + 地面色，均匀照亮整个场景
+    const hemisphereLight = new THREE.HemisphereLight(
+      0xddeeff, // 天空颜色（淡蓝白）
+      0x8899aa, // 地面颜色（灰蓝）
+      0.6       // 强度
+    );
+    this.scene.add(hemisphereLight);
   }
 
   loaderModel(option) {
@@ -137,13 +151,6 @@ export default class ZThree {
       default:
         break;
     }
-    //  if(app.model){
-    //    app.model.traverse(obj => {
-    //     if(obj.name.indexOf('半库') > -1){
-    //       obj.visible = false;
-    //     }
-    //   })
-    //  }
   }
 
   //加载模型
@@ -165,26 +172,6 @@ export default class ZThree {
           } else {
             if (onAllLoad) {
               onAllLoad();
-              // let position = [
-              //   {
-              //     x: 2,
-              //     y: 1,
-              //     z: 3,
-              //     name: "103水管",
-              //   },  {
-              //     x: 5,
-              //     y: 2,
-              //     z: 2,
-              //     name: "104水管",
-              //   },
-              //   {
-              //     x: 5,
-              //     y: 2,
-              //     z: 1,
-              //     name: "105水管",
-              //   }
-              // ];
-              // addParkWater(window.app,position);
             }
           }
         },
@@ -204,10 +191,15 @@ export default class ZThree {
   // 鼠标射线
   // 初始化射线
   initRaycaster(callback, models = this.scene.children, eventName = "click") {
+    this._rayFns = this._rayFns || {};
+    // 先销毁同类型旧监听，防止重复绑定
+    if (this._rayFns[eventName]) {
+      this.el.removeEventListener(eventName, this._rayFns[eventName]);
+    }
     this.raycaster = new THREE.Raycaster();
-    this.rayFn = this.rayEventFn.bind(this, models, callback);
-    // 绑定点击事件
-    this.el.addEventListener(eventName, this.rayFn);
+    const rayFn = this.rayEventFn.bind(this, models, callback);
+    this._rayFns[eventName] = rayFn;
+    this.el.addEventListener(eventName, rayFn);
   }
 
   rayEventFn(models, callback) {
@@ -218,35 +210,18 @@ export default class ZThree {
     };
 
     let activeObj = this.fireRaycaster(mouse, models);
-    // if (activeObj.point) {
-    //   console.log([activeObj.point.x, activeObj.point.y, activeObj.point.z]);
-    //   console.log(activeObj);
-    // }
     if (callback) {
       callback(activeObj, this, evt, mouse);
     }
-
-    // 判断是否与模型相交，设置鼠标样式
-    let isIntersected = false;
-    for (let i = 0; i < models.length; i++) {
-      if (activeObj.object === models[i]) {
-        isIntersected = true;
-        break;
-      }
-    }
-
-    // if (isIntersected) {
-    //   document.body.style.cursor = "pointer"; // 与模型相交时，设置为小手指针样式
-    // } else {
-    //   document.body.style.cursor = "default"; // 未与模型相交时，设置为默认样式
-    // }
-    //鼠标的变换
-    // document.body.style.cursor = "pointer";
   }
   //删除文本标签
   destroyRaycaster(eventName) {
+    this._rayFns = this._rayFns || {};
+    if (this._rayFns[eventName]) {
+      this.el.removeEventListener(eventName, this._rayFns[eventName]);
+      delete this._rayFns[eventName];
+    }
     this.raycaster = null;
-    this.el.removeEventListener(eventName, this.rayFn);
   }
 
   // 返回选中物体
@@ -278,7 +253,10 @@ export default class ZThree {
     option.controls = option.controls || [];
     option.duration = option.duration || 1000;
     option.easing = option.easing || TWEEN.Easing.Linear.None;
-
+    if (this._flyTween) {
+      this._flyTween.stop();
+      this._flyTween = null;
+    }
     const curPosition = this.camera.position;
     const curControls = this.controls.target;
 
@@ -318,17 +296,20 @@ export default class ZThree {
       }
     });
     tween.onComplete(() => {
+      this._flyTween = null;
       this.controls.enabled = true;
       if (option.done instanceof Function) {
         option.done();
       }
     });
     tween.onStop(() => {
+      this._flyTween = null;
       this.controls.enabled = true;
       if (option.stop instanceof Function) {
         option.stop();
       }
     });
+    this._flyTween = tween;
     tween.start();
     return tween;
   }
