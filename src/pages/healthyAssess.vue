@@ -145,6 +145,7 @@
 <script>
 import { Notification } from "element-ui";
 import EventBus from '@/bus';
+import { LOCAL_QUERY_SETTLEMENT, LOCAL_QUERY_TILT, LOCAL_QUERY_STRAIN, RADAR_SURFACE } from '@/constants/api';
 export default {
     name: 'healthyAssess',
     data() {
@@ -216,11 +217,12 @@ export default {
       deep:true,
     },
      computed: {
+      // 兜底 (|| []) ：接口异常时数组可能为 undefined，避免渲染期 .filter 崩溃
       abnormalSettlementSensors() {
-        return this.settlementSensors.filter(sensor => sensor['状态'] !== 0);
+        return (this.settlementSensors || []).filter(sensor => sensor['状态'] !== 0);
       },
       abnormalInclinationSensors() {
-        return this.inclinationSensors.filter(sensor => sensor['状态'] !== 0);
+        return (this.inclinationSensors || []).filter(sensor => sensor['状态'] !== 0);
       },
       displayedSettlementSensors() {
         const abnormal = this.abnormalSettlementSensors;
@@ -266,14 +268,19 @@ export default {
       },
       async getRealData(){
         try {
-          const retSettle = await fetch(`http://localhost:3000/api/query/settlementstatus?limit=7`)
-          const retCline = await fetch(`http://localhost:3000/api/query/TiltStatus?limit=8`)
-          const retStrain = await fetch(`http://localhost:3000/api/query/strainStatus?limit=197`)
-          this.settlementSensors = (await retSettle.json()).data
-          this.inclinationSensors = (await retCline.json()).data
-          this.strainSensors = (await retStrain.json()).data
+          const retSettle = await fetch(LOCAL_QUERY_SETTLEMENT)
+          const retCline = await fetch(LOCAL_QUERY_TILT)
+          const retStrain = await fetch(LOCAL_QUERY_STRAIN)
+          // 接口异常时（如 503 返回 {error}）没有 data 字段，兜底为空数组，
+          // 否则赋值 undefined 会让渲染期的 .filter 崩溃、整个面板无法显示
+          this.settlementSensors = (await retSettle.json()).data || []
+          this.inclinationSensors = (await retCline.json()).data || []
+          this.strainSensors = (await retStrain.json()).data || []
           this.dataLoaded = true
         } catch(e) {
+          this.settlementSensors = []
+          this.inclinationSensors = []
+          this.strainSensors = []
           this.dataLoaded = false
         }
         this.srainStatusProcess()
@@ -391,7 +398,7 @@ export default {
       // 获取雷达的数据
       async getRaderData(){
         try {
-          const raderData = await fetch('http://192.168.1.120:33490/api/result_data/surface?tank_id=1&mode=round');
+          const raderData = await fetch(RADAR_SURFACE);
           this.realLeverl = (await raderData.json()).data.average_height
         } catch(e) {
           console.error('雷达数据获取失败:', e);

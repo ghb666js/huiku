@@ -47,6 +47,7 @@
 
 <script>
 import EventBus from '@/bus';
+import { WS_FLOW, API_VIDEO, API_IMG, API_PLC } from '@/constants/api';
 
 export default {
     name: 'flowMonitioring',
@@ -102,12 +103,12 @@ export default {
       updateFlow(data) {
         this.isShowFlow = data.show;
       },
-      // [WebSocket测试] 连接 ws://localhost:3000/flow
+      // 连接流量监控 WebSocket
       connectWebSocket() {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
-        this.ws = new WebSocket('ws://localhost:3000/flow');
+        this.ws = new WebSocket(WS_FLOW);
         this.ws.onopen = () => {
-          console.log('[WS] 已连接 ws://localhost:3000/flow');
+          console.log('[WS] 已连接', WS_FLOW);
         };
         this.ws.onmessage = () => {
           this.fetchFlowData();
@@ -150,7 +151,7 @@ export default {
         if (!this.videoPlaying || this.videoStopped) return;
         const fps = 5;
         try {
-          const res = await fetch('http://localhost:3000/api/video');
+          const res = await fetch(API_VIDEO);
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const json = await res.json();
           if (json.code !== 0 || !json.data || !json.data.FlowmeterData || json.data.FlowmeterData.length === 0) {
@@ -207,7 +208,7 @@ export default {
       },
       async fetchFlowData() {
         try {
-          const res = await fetch('http://localhost:3000/api/img');
+          const res = await fetch(API_IMG);
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const json = await res.json();
           console.log(json,'图片数据');
@@ -225,7 +226,7 @@ export default {
       },
       async fetchPlcData() {
         try {
-          const res = await fetch('http://localhost:3000/api/plc');
+          const res = await fetch(API_PLC);
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const json = await res.json();
           console.log('[API/plc] 返回数据:', json);

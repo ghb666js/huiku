@@ -3,6 +3,7 @@ import { floorBaseMaterial2 } from "@/three/material";
 import EventBus from "@/bus";
 import { setModelDefaultMaterial } from '@/three/loaderModel';
 import * as THREE from "three";
+import { RADAR_DETAIL } from "@/constants/api";
 // 处理电力监测功能
 export function loaderParkRadar(app) {
   app.flyTo({
@@ -92,7 +93,7 @@ let lastOriginalMaterial = null;
   app.initRaycaster(
     (activeObj, app, event) => {
       if (activeObj.object && activeObj.object.name.indexOf("雷达") > -1) {
-        window.open('http://192.168.1.120:33490/app-detail/1', '_blank');
+        window.open(RADAR_DETAIL, '_blank');
       }
     },
     app.rayModel,

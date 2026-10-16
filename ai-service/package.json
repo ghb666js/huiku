@@ -1,0 +1,14 @@
+{
+  "name": "huiku-ai-service",
+  "version": "1.0.0",
+  "description": "钢板仓灰库孪生系统 - AI 助手代理服务（可独立部署，不依赖数据库/串口）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2"
+  }
+}

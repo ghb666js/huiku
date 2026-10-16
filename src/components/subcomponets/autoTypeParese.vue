@@ -117,6 +117,7 @@
 
 <script>
 import axios from 'axios';
+import { API_INSERT, queryUrl } from '@/constants/api';
 export default {
   name: 'AutoTypeParse',
   // components: { ResultTable },
@@ -918,7 +919,7 @@ export default {
     // 保存到MySQL数据库
     async saveToMySQL(tableName, data) {
       try {
-        const res = await axios.post('http://localhost:3000/api/insert', {
+        const res = await axios.post(API_INSERT, {
           table: tableName,
           rows: data
         });
@@ -939,7 +940,7 @@ export default {
         if (!Number.isInteger(limit) || limit < 1 || limit > 20000) {
           throw new Error('limit 必须是 1-20000 之间的整数');
         }
-        const res = await fetch(`http://localhost:3000/api/query/${tableName}?limit=${limit}`);
+        const res = await fetch(queryUrl(tableName, limit));
         if (!res.ok) {
           throw new Error(`HTTP 错误: ${res.status}`);
         }

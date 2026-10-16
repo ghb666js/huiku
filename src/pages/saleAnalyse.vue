@@ -80,6 +80,7 @@ import EventBus from '@/bus';
 import * as echarts from 'echarts';
 import { refresh, watch } from 'less';
 import { saveToMySQL } from '@/utils/generalfunction';
+import { API_ORDER, LOCAL_QUERY_ORDER } from '@/constants/api';
 export default {
     name: 'saleAnalyse',
     data() {
@@ -208,7 +209,7 @@ export default {
             });
 
             try {
-                const res = await fetch('http://localhost:3000/api/order?' + params);
+                const res = await fetch(API_ORDER + '?' + params);
                 const data = await res.json();
 
                 if (data.error) {
@@ -465,9 +466,7 @@ export default {
       // },
       async fetchData() {
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/query/neworderrecorddata?limit=2000`
-          );
+          const response = await fetch(LOCAL_QUERY_ORDER);
           const result = await response.json();
             if (result.data && result.data.length > 0) {
               this.allData = result.data;

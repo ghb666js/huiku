@@ -74,6 +74,7 @@
 </template>
 
 <script>
+import { queryUrl } from '@/constants/api';
 export default {
   name: 'queryHistory',
   data() {
@@ -180,7 +181,7 @@ export default {
           throw new Error('limit 必须是 1-10000 之间的整数');
         }
 
-        const res = await fetch(`http://localhost:3000/api/query/${tableName}?limit=${limit}`);
+        const res = await fetch(queryUrl(tableName, limit));
 
         if (!res.ok) {
           throw new Error(`HTTP 错误: ${res.status}`);

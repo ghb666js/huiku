@@ -42,6 +42,9 @@
     </div>
         <!-- 数据孪生全屏界面 -->
     <digital-twin :open="dtOpen" :mini="dtMini" @close="closeDigitalTwin"></digital-twin>
+
+    <!-- AI 助手（悬浮可拖拽） -->
+    <ai-assistant></ai-assistant>
   </div>
 </template>
 
@@ -54,26 +57,27 @@ import TWEEN from 'three/examples/jsm/libs/tween.module.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import { cssRender } from '@/three/cssRender'
 import { createReprocessing } from '@/three/reprocessing'
-import { darkMaterial } from '@/three/material'
+import { REMOTE_QUERY_DATA, REMOTE_QUERY_SETTLEMENT, REMOTE_QUERY_TILT, REMOTE_QUERY_STRAIN } from '@/constants/api'
 import { initRobotMark, setRobotMarkVisible, setRobotModelVisible, setPipesVisible, stopRobotAnimations, resetRobotNodes, destroyRobotMark } from '@/three/robot'
 import { initSensorLayers, exitSensorLayers, selectSensorLayer, getActiveLayer, pickableMeshes, meshLayer, setSensorBaseScale, setHoverSensor, clearHoverSensor, applySensorStatuses, clearSensorStatuses, pulseSensorStatuses } from '@/three/sensorLayers'
-import monitorH from '@/components/monitorH.vue'
-import drawerT from '@/components/drawerT.vue'
-import healthyAssess from '@/components/healthyAssess.vue'
-import deviceControl from '@/components/deviceControl.vue'
-import saleAnalyse from '@/components/saleAnalyse.vue'
-import flowMonitoring from '@/components/flowMonitoring.vue'
+import monitorH from '@/pages/monitorH.vue'
+import drawerT from '@/pages/drawerT.vue'
+import healthyAssess from '@/pages/healthyAssess.vue'
+import deviceControl from '@/pages/deviceControl.vue'
+import saleAnalyse from '@/pages/saleAnalyse.vue'
+import flowMonitoring from '@/pages/flowMonitoring.vue'
 import controlBtn from '@/components/controlBtn.vue'
 import digitalTwin from '@/components/digitalTwin.vue'
+import aiAssistant from '@/components/aiAssistant.vue'
 
-let app, camera, scene, renderer, controls, clock, reprocessing, materials={}
+let app, camera, scene, renderer, controls, clock
 // 进入监测时传感器的整体放大倍数(便于观察/点选)，离开时还原为1
 const SENSOR_BASE_SCALE = 1.8
 // 点击时允许的屏幕吸附距离(px)，点不中时自动吸附最近的传感器
 const PICK_TOLERANCE = 22
 export default {
   name: 'HomeView',
-  components: { bigControl,monitorH,drawerT,healthyAssess,deviceControl,saleAnalyse,flowMonitoring,controlBtn,digitalTwin },
+  components: { bigControl,monitorH,drawerT,healthyAssess,deviceControl,saleAnalyse,flowMonitoring,controlBtn,digitalTwin,aiAssistant },
   data() {
     return {
       showDrawer: true, // 默认首页显示侧拉框
@@ -120,8 +124,9 @@ export default {
       app.cssRenderer = instance.cssRenderer
       app.instance = instance
 
-      //开启辉光
-      reprocessing = createReprocessing(app)
+      // 后处理管线（渲染一次场景 + 边缘高亮 + FXAA），已移除辉光
+      createReprocessing(app)
+      this.initDynamicPixelRatio()
 
       // [加载动画] 显示loading → 加载模型 → 隐藏loading
       this.loading = true
@@ -136,18 +141,34 @@ export default {
         const delta = clock.getDelta()
         controls.update(delta)
         if (app.mixer) app.mixer.update(delta);
-        renderer.render(scene, app.camera)
-        // 开启辉光
-        scene.traverse(this.darkenNonBloomed)
-        reprocessing.render()
-        scene.traverse(this.restoreMaterial)
+        // 边缘高亮：仅在有选中物体时启用
+        if (app.outlinePass) app.outlinePass.enabled = app.selectedObjects.length > 0
         app.finalComposer.render()
 
         app.cssRenderer.render(scene, app.camera)
         TWEEN.update()
         pulseSensorStatuses(performance.now() / 1000)
       })
-    
+
+    },
+    // 动态像素比：交互(拖动/缩放)时降低以保证流畅，静止后升高保证清晰
+    initDynamicPixelRatio() {
+      const HI = Math.min(window.devicePixelRatio || 1, 3) // 静止：高清晰度
+      const LO = 1.5                                       // 交互：低负载
+      const apply = (ratio) => {
+        renderer.setPixelRatio(ratio)
+        if (app.finalComposer) app.finalComposer.setSize(app.el.offsetWidth, app.el.offsetHeight)
+      }
+      apply(HI)
+      let timer = null
+      controls.addEventListener('start', () => {
+        if (timer) { clearTimeout(timer); timer = null }
+        apply(LO)
+      })
+      controls.addEventListener('end', () => {
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(() => apply(HI), 250)
+      })
     },
     backFromRobot() {
       this.showRobotView = false;
@@ -346,7 +367,7 @@ export default {
     },
     async fetchSensorData() {
       if (this._sensorCache) return this._sensorCache;
-      const res = await fetch('http://47.97.3.132/api/query/data?limit=5000');
+      const res = await fetch(REMOTE_QUERY_DATA);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const json = await res.json();
       const arr = Array.isArray(json) ? json : ((json && json.data) || []);
@@ -439,9 +460,9 @@ export default {
       };
       try {
         const [settle, tilt, strain] = await Promise.all([
-          fetchRows('http://47.97.3.132/api/query/settlementstatus?limit=7'),
-          fetchRows('http://47.97.3.132/api/query/tiltstatus?limit=8'),
-          fetchRows('http://47.97.3.132/api/query/strainstatus?limit=197')
+          fetchRows(REMOTE_QUERY_SETTLEMENT),
+          fetchRows(REMOTE_QUERY_TILT),
+          fetchRows(REMOTE_QUERY_STRAIN)
         ]);
         const map = {};
         // 规则与 dealAlarmData 一致：状态1/2直接使用；状态非0且非1/2(如null等)归为3(红闪)；0为正常绿
@@ -459,19 +480,6 @@ export default {
         applySensorStatuses(map);
       } catch (e) {
         console.error('刷新传感器状态失败', e);
-      }
-    },
-    //开启辉光
-    darkenNonBloomed(obj) {
-      if (obj.isMesh && app.bloomLayer.test(obj.layers) === false) {
-        materials[obj.uuid] = obj.material;
-        obj.material = darkMaterial;
-      }
-    },
-    restoreMaterial(obj) {
-      if (materials[obj.uuid]) {
-        obj.material = materials[obj.uuid];
-        delete materials[obj.uuid];
       }
     }
 

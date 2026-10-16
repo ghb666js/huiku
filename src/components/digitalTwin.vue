@@ -89,6 +89,7 @@
 <script>
 import echarts from 'echarts';
 import { selectSensorLayer, exitSensorLayers } from '@/three/sensorLayers';
+import { REMOTE_QUERY_SETTLEMENT, REMOTE_QUERY_TILT, REMOTE_QUERY_STRAIN } from '@/constants/api';
 
 const STATUS_COLORS = { 0: '#27ae60', 1: '#ffc107', 2: '#ff7f00', 3: '#ff3b30' };
 const STATUS_TEXT = { 0: '正常', 1: '数据异常', 2: '设备异常', 3: '设备损坏' };
@@ -324,9 +325,9 @@ export default {
       };
       try {
         const [settle, tilt, strain] = await Promise.all([
-          get('http://47.97.3.132/api/query/settlementstatus?limit=7'),
-          get('http://47.97.3.132/api/query/tiltstatus?limit=8'),
-          get('http://47.97.3.132/api/query/strainstatus?limit=197')
+          get(REMOTE_QUERY_SETTLEMENT),
+          get(REMOTE_QUERY_TILT),
+          get(REMOTE_QUERY_STRAIN)
         ]);
         const rows = [...settle, ...tilt, ...strain];
         const stats = this.statusStats.map(s => ({ ...s, count: 0 }));

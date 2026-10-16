@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_INSERT, queryUrl } from "@/constants/api";
 
 export function portLabel(port) {
     try {
@@ -650,7 +651,7 @@ export function removeEmptyObjects(arr) {
 // 保存到MySQL数据库
 export async function saveToMySQL(tableName, data) {
     try {
-        const res = await axios.post('http://localhost:3000/api/insert', {
+        const res = await axios.post(API_INSERT, {
             table: tableName,
             rows: data
         });
@@ -671,7 +672,7 @@ export async function getHistoryData(tableName, limit) {
         if (!Number.isInteger(limit) || limit < 1 || limit > 20000) {
             throw new Error('limit 必须是 1-20000 之间的整数');
         }
-        const res = await fetch(`http://localhost:3000/api/query/${tableName}?limit=${limit}`);
+        const res = await fetch(queryUrl(tableName, limit));
         if (!res.ok) {
             throw new Error(`HTTP 错误: ${res.status}`);
         }

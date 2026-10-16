@@ -19,8 +19,6 @@ export function loaderModel(app) {
           app.animations = object.animations; // 保存动画供遥控进退使用
           //需要接收阴影的小模型
           const receiveModel = []
-          // 使用辉光渲染的模型
-          const bloomModels=[]
           //遍历模型里的小模型
           app.model.children[0].children[11].traverse((obj) => {
             obj.visible = false;
@@ -31,10 +29,10 @@ export function loaderModel(app) {
               if(e.run){
                 app.mixer = new THREE.AnimationMixer(app.model);
                 const animations = object.animations;
-                console.log('动画列表:', animations.map(a => a.name));
+                // console.log('动画列表:', animations.map(a => a.name));
                 if (animations && animations.length > 0) {
                   const runClips = animations.filter(a => a.name.includes('run'));
-                  console.log('播放动画:', runClips.map(a => a.name));
+                  // console.log('播放动画:', runClips.map(a => a.name));
                   // 清除旧的"全部播完"监听
                   if (app._onRunMixerFinished) {
                     app.mixer.removeEventListener('finished', app._onRunMixerFinished);
@@ -121,16 +119,6 @@ export function loaderModel(app) {
             } else {
               obj.castShadow = true;
               obj.receiveShadow = false;
-            }
-
-            for (let i = 0; i <bloomModels.length; i++){
-              const value = bloomModels[i]
-              if(obj.name.indexOf(value)>-1){
-                obj.layers.enable(1)
-                break
-              }else{
-                obj.layers.enable(0)
-              }
             }
           });
         },

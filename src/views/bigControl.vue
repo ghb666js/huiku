@@ -92,13 +92,17 @@ export default {
                 {
                     name: '仓体健康评估',
                     goFunction: () => {    
-                        app.flyTo({
-                            position: [30,15,30],
-                            controls: [5,15,5]
-                        });
+                        // 先显示面板，再做相机动画：避免 flyTo 异常导致面板不显示
                         EventBus.$emit('healthassessUI',{
                             show: true,
                         })
+                        const a = window.app;
+                        if (a && a.flyTo) {
+                            a.flyTo({
+                                position: [30,15,30],
+                                controls: [5,15,5]
+                            });
+                        }
                     },
                     backFunction: () => {
                         // destroyParkElectricity(window.app)
@@ -151,17 +155,43 @@ export default {
     },
     methods: {
         activeFun(item, index) {
+            // 点击已激活的模块时 activeVar 不变、watcher 不会触发，
+            // 这里主动重新执行一次进入逻辑，保证面板关闭后仍能再次点开
+            if (this.activeVar === index) {
+                try {
+                    item.goFunction();
+                } catch (e) {
+                    console.error(`[模块进入失败] ${item.name}:`, e);
+                }
+                this.$EventBus.$emit('bigcontrol-active', item.name);
+                return;
+            }
             this.activeVar = index
         },
     },
     watch: {
         activeVar(newVal, oldVal) {
-            const oldControl = this.controls.filter((item) => item.name === this.controls[oldVal].name);
-            oldControl[0].backFunction();
-            const newControl = this.controls.filter((item) => item.name === this.controls[newVal].name);
-            newControl[0].goFunction();
+            // 错误隔离：单个模块的 go/back 抛错不影响其他模块与后续事件
+            const oldControl = this.controls[oldVal];
+            if (oldControl) {
+                try {
+                    oldControl.backFunction();
+                } catch (e) {
+                    console.error(`[模块退出失败] ${oldControl.name}:`, e);
+                }
+            }
+            const newControl = this.controls[newVal];
+            if (newControl) {
+                try {
+                    newControl.goFunction();
+                } catch (e) {
+                    console.error(`[模块进入失败] ${newControl.name}:`, e);
+                }
+            }
             // Emit event to notify current active module
-            this.$EventBus.$emit('bigcontrol-active', newControl[0].name);
+            if (newControl) {
+                this.$EventBus.$emit('bigcontrol-active', newControl.name);
+            }
         },
     },
 }

@@ -17,9 +17,9 @@
 
 <script>
 import EventBus from '@/bus';
-import setPower from './subcomponets/setPower.vue'
-import setTime from './subcomponets/setTime.vue'
-import generalButton from './generalButton.vue';
+import setPower from '../components/subcomponets/setPower.vue'
+import setTime from '../components/subcomponets/setTime.vue'
+import generalButton from '../components/generalButton.vue';
 
 export default {
     name: 'deviceControl',

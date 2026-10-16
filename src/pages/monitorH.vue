@@ -35,10 +35,10 @@
 <script>
 import EventBus from '@/bus';
 import { selectSensorLayer, exitSensorLayers } from '@/three/sensorLayers';
-import AutoTypeParese from './subcomponets/autoTypeParese.vue';
-import queryHistory from './subcomponets/queryHistory.vue';
-import abnormalDate from './subcomponets/abnormalDate.vue';
-import generalButton from './generalButton.vue';
+import AutoTypeParese from '../components/subcomponets/autoTypeParese.vue';
+import queryHistory from '../components/subcomponets/queryHistory.vue';
+import abnormalDate from '../components/subcomponets/abnormalDate.vue';
+import generalButton from '../components/generalButton.vue';
 export default {
     name: 'monitorH',
     data() {

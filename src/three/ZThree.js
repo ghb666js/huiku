@@ -40,7 +40,7 @@ export default class ZThree {
       antialias: true,
       alpha: true,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 5));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(width, height);
     this.el.append(this.renderer.domElement);
 
@@ -53,6 +53,10 @@ export default class ZThree {
 
       if (this.cssRenderer) {
         this.cssRenderer.setSize(this.el.offsetWidth, this.el.offsetHeight);
+      }
+      // 后处理管线尺寸同步，避免 resize 后画面错位/模糊
+      if (this.finalComposer) {
+        this.finalComposer.setSize(this.el.offsetWidth, this.el.offsetHeight);
       }
     });
   }

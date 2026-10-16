@@ -169,6 +169,9 @@ export function initRobotMark(app) {
   // 点击标记跳转到清灰机器人
   app._robotMarkClick = (evt) => {
     if (!robotPos) return;
+    // 标记不可见时（处于其他模块）不响应点击：
+    // sprite.visible=false 只影响渲染，Raycaster 仍可能命中该精灵
+    if (!sprite.visible) return;
     const mouse = new THREE.Vector2(
       (evt.clientX / window.innerWidth) * 2 - 1,
       -(evt.clientY / window.innerHeight) * 2 + 1

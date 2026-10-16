@@ -92,6 +92,7 @@
 </template>
 
 <script>
+import { API_HEALTH, API_COM_PORTS } from '@/constants/api';
 export default {
   name: 'SetPower',
   data() {
@@ -122,7 +123,6 @@ export default {
       authorizedPorts: [],  // 浏览器授权的端口对象数组
       systemComPorts: [],   // Node.js返回的系统COM端口信息
       portMapping: {},      // 浏览器索引 -> 系统COM信息映射
-      NODE_SERVER: 'http://localhost:3000',
       
       // UI状态
       systemStatus: '正在初始化...',
@@ -330,12 +330,12 @@ export default {
     // 检查Node服务
     async checkNodeService() {
       try {
-        const response = await fetch(`${this.NODE_SERVER}/api/health`, {
+        const response = await fetch(API_HEALTH, {
           method: 'GET',
           mode: 'cors',
           cache: 'no-cache'
         });
-        // const url = `${this.NODE_SERVER}/api/health`;
+        // const url = API_HEALTH;
         // console.log('实际请求地址:', url);  // ← 加这行
         //  console.log('响应状态:', response.status);  // ← 加这行
         if (response.ok) {
@@ -367,7 +367,7 @@ export default {
       // 2. 获取系统COM端口
       this.authStatus = '正在获取系统COM端口列表...';
       try {
-        const response = await fetch(`${this.NODE_SERVER}/api/com-ports`, {
+        const response = await fetch(API_COM_PORTS, {
           method: 'GET',
           mode: 'cors',
           cache: 'no-cache'

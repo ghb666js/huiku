@@ -14,7 +14,6 @@
   </template>
   
   <script>
-    // import monitorH from './monitorH.vue';
     export default {
       name: 'layer',
       components: {},
